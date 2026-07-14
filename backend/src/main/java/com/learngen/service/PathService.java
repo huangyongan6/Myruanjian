@@ -14,4 +14,12 @@ public interface PathService {
 
     /** 获取某学生的最新学习路径。 */
     LearningPath getLatest(Long studentId);
+
+    /**
+     * 更新学习路径进度（currentStep）。
+     *
+     * @param studentId 学生 ID
+     * @param currentStep 新的当前步骤索引（从 0 开始）
+     */
+    LearningPath updateCurrentStep(Long studentId, int currentStep);
 }

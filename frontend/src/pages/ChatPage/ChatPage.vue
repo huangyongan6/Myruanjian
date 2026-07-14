@@ -8,7 +8,7 @@ import { useChatStore } from '@/stores/chat'
 
 const studentStore = useStudentStore()
 const chatStore = useChatStore()
-const { messages, streaming, sendMessage, connected, ensureConnected, reconnecting } = useChat()
+const { messages, streaming, isStreamingActive, sendMessage, connected, ensureConnected, reconnecting } = useChat()
 
 const input = ref('')
 const sending = ref(false)
@@ -17,20 +17,11 @@ const showInitDialog = ref(!studentStore.isLoggedIn)
 const initName = ref('')
 const initId = ref<number | null>(null)
 const initMode = ref<'create' | 'load'>('create')
+/** 用户是否主动滑动过页面（主动滑动后暂停自动滚动，直到发送新消息） */
+const userScrolled = ref(false)
 
 const currentStudent = computed(() => studentStore.currentStudent)
 const currentStudentId = computed(() => studentStore.currentStudentId)
-
-const streamingMessage = computed(() => {
-  if (!streaming.value) return null
-  return {
-    studentId: streaming.value.studentId,
-    role: 'assistant' as const,
-    content: streaming.value.content,
-    agentType: streaming.value.agentType,
-    createdAt: new Date().toISOString()
-  }
-})
 
 function scrollToBottom(): void {
   nextTick(() => {
@@ -40,10 +31,33 @@ function scrollToBottom(): void {
   })
 }
 
+/**
+ * 检测用户是否主动滑动：如果是则暂停自动滚动。
+ * 用户发送新消息后重置为 false，恢复自动滚动。
+ */
+function onScroll(): void {
+  if (!scrollRef.value) return
+  const { scrollTop, scrollHeight, clientHeight } = scrollRef.value
+  // scrollTop < scrollHeight - clientHeight - 50 表示用户向上滑了（未在底部）
+  const isAtBottom = scrollTop >= scrollHeight - clientHeight - 50
+  if (!isAtBottom) {
+    userScrolled.value = true
+  } else {
+    // 用户滑动回底部，视为已看完最新内容，重置标志
+    userScrolled.value = false
+  }
+}
+
 async function handleSend(): Promise<void> {
   const text = input.value.trim()
   if (!text) return
   sending.value = true
+  // 用户发送消息后重置主动滑动标志，发送过程中自动滚动
+  userScrolled.value = false
+  // 如果 AI 正在输出，先终止当前输出
+  if (isStreamingActive.value) {
+    chatStore.cancelStream()
+  }
   try {
     await sendMessage(text)
     input.value = ''
@@ -108,9 +122,32 @@ async function loadHistory(): Promise<void> {
   scrollToBottom()
 }
 
+const streamingMessage = computed(() => {
+  if (!streaming.value) return null
+  return {
+    studentId: streaming.value.studentId,
+    role: 'assistant' as const,
+    content: streaming.value.content,
+    agentType: streaming.value.agentType,
+    createdAt: new Date().toISOString()
+  }
+})
+
+/**
+ * 监听消息变化自动滚动：
+ * - 流式输出期间持续滚动（streamingBuffer 有内容时持续触发）
+ * - 非流式时，只有用户没有主动滑动才自动滚动
+ *
+ * <p>注意：这里用 streamingMessage?.content 做深度监听，因为 streamingBuffer 对象
+ * 引用不变但 content 字符串在不断拼接，只有监听 content 才能捕获每次追加。
+ */
 watch(
-  () => messages.value.length,
-  () => scrollToBottom()
+  () => [messages.value.length, streamingMessage.value?.content] as const,
+  () => {
+    if (streamingMessage.value || !userScrolled.value) {
+      scrollToBottom()
+    }
+  }
 )
 
 onMounted(() => {
@@ -136,7 +173,7 @@ onMounted(() => {
       </div>
     </div>
 
-    <div ref="scrollRef" class="chat-page__messages">
+    <div ref="scrollRef" class="chat-page__messages" @scroll="onScroll">
       <div v-if="messages.length === 0 && !streamingMessage" class="empty-tip">
         👋 欢迎，{{ currentStudent?.name ?? '同学' }}！<br />
         告诉我你的学习背景、目标与困惑，我会为你推荐个性化资源。

@@ -67,6 +67,20 @@ function paceLabel(pace?: string): string {
 }
 
 /**
+ * 每日学习时长格式化：数字小时 -> "X小时XX分钟"。
+ * 例如 1.5 -> "1小时30分钟"，0.5 -> "30分钟"。
+ */
+function formatDailyHours(hours?: number): string {
+  if (hours === undefined || hours === null) return '未提供'
+  if (hours <= 0) return '0分钟'
+  const h = Math.floor(hours)
+  const m = Math.round((hours - h) * 60)
+  if (h > 0 && m > 0) return `${h}小时${m}分钟`
+  if (h > 0) return `${h}小时`
+  return `${m}分钟`
+}
+
+/**
  * 数组字段安全访问，缺失或非数组时返回空数组。
  */
 function safeArray<T>(value: T[] | undefined | null): T[] {
@@ -224,7 +238,7 @@ onMounted(loadProfile)
               <li class="profile-page__item">
                 <span class="profile-page__label">每日学习时长</span>
                 <span class="profile-page__value">
-                  {{ learningPace.daily_hours !== undefined ? `${learningPace.daily_hours} 小时` : '未提供' }}
+                  {{ formatDailyHours(learningPace.daily_hours) }}
                 </span>
               </li>
               <li class="profile-page__item">

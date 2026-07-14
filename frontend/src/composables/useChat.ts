@@ -32,6 +32,7 @@ export function useChat() {
     currentStudentId.value !== null ? chatStore.getMessages(currentStudentId.value) : []
   )
   const streaming = computed(() => chatStore.streamingBuffer)
+  const isStreamingActive = computed(() => chatStore.isStreamingActive)
 
   function ensureConnected(): void {
     if (!ws.connected.value) {
@@ -55,7 +56,7 @@ export function useChat() {
     if (currentStudentId.value === null) return
     if (payload.type === 'message') {
       chatStore.appendStreamChunk(currentStudentId.value, payload.content)
-      chatStore.currentAgent = payload.type
+      chatStore.currentAgent = payload.agentType ?? payload.type
     } else if (payload.type === 'done') {
       chatStore.finalizeStream()
     } else if (payload.type === 'error') {
@@ -102,6 +103,7 @@ export function useChat() {
     reconnecting: ws.reconnecting,
     messages,
     streaming,
+    isStreamingActive,
     sendMessage,
     ensureConnected,
     disconnect

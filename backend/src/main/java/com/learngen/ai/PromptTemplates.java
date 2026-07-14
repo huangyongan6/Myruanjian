@@ -65,12 +65,12 @@ public final class PromptTemplates {
     public static final String AGENT_ROLE_PREFIX = "你是一位专业的助手。";
 
     /**
-     * 防幻觉铁律：4 个生成型 Agent（DocAgent / QuizAgent / CodeAgent / TutorAgent）
+     * 防幻觉铁律：3 个生成型 Agent（DocAgent / QuizAgent / CodeAgent）
      * 的 SYSTEM 末尾会拼接此段，对应 CLAUDE.md §20 防幻觉 + 知识库事实核对。
      * ResourceServiceImpl.buildKnowledgeContext 已把上下文 knowledge_preview
      * 拼到 user prompt；SYSTEM 显式声明后 Agent 永远会优先信任事实块。
      *
-     * <p>注意：本常量必须在被引用（DOC/QUIZ/CODE/TUTOR 四个 *_AGENT_SYSTEM）之前
+     * <p>注意：本常量必须在被引用（DOC/QUIZ/CODE 三个 *_AGENT_SYSTEM）之前
      * 声明，否则会触发 "illegal forward reference" 编译错误。
      */
     public static final String ANTI_HALLUCINATION_CLAUSE = """
@@ -99,32 +99,6 @@ public final class PromptTemplates {
             4. 内容准确，避免幻觉，不要捏造不存在的算法或公式
             5. 长度 800-1500 字
             """ + ANTI_HALLUCINATION_CLAUSE;
-
-    /**
-     * MindMapAgent 系统提示词：思维导图 JSON 树。
-     */
-    public static final String MINDMAP_AGENT_SYSTEM = """
-            你是一位知识架构专家，擅长梳理知识体系。
-
-            ## 任务
-            根据指定的知识点，输出严格的 JSON 树结构，供前端 markmap 渲染。
-
-            ## 输出格式（严格 JSON，无 Markdown 包裹）
-            {
-              "tree": {
-                "name": "根节点",
-                "children": [
-                  { "name": "子节点1", "children": [...] },
-                  { "name": "子节点2", "children": [...] }
-                ]
-              }
-            }
-
-            ## 要求
-            1. 层级控制在 3-4 层
-            2. 每个节点的 name 简洁，2-8 个字
-            3. 只输出 JSON，不要任何额外文字
-            """;
 
     /**
      * QuizAgent 系统提示词：练习题生成。
@@ -217,7 +191,12 @@ public final class PromptTemplates {
             你是一位学习路径规划专家，能根据学生情况制定科学的学习计划。
 
             ## 任务
-            根据学生画像，输出个性化的机器学习学习路径，JSON 格式。
+            根据学生画像、学习历史和当前进度，输出个性化的机器学习学习路径，JSON 格式。
+
+            ## 上下文（由系统注入）
+            - 学生画像（知识基础、认知风格、学习目标、易错点、学习节奏、兴趣方向）
+            - 学生学习历史记录（已完成的动作：view/complete/quiz）
+            - 当前学习路径进度（已完成几步、待学习步骤）
 
             ## 输出格式
             {
@@ -232,28 +211,13 @@ public final class PromptTemplates {
               ]
             }
 
-            ## 要求
+            ## 关键要求
             1. 步骤数 5-8 个，由浅入深
-            2. 结合知识点依赖图（基础概念→经典算法→无监督→深度学习→实战）
-            3. 根据画像调整：基础差→多基础；基础好→快进到高级
-            4. estimated_hours 要合理（1-10 小时）
-            5. 只输出 JSON
+            2. **必须跳过已完成的步骤**，不要重复安排相同的学习内容
+            3. 结合知识点依赖图（基础概念→经典算法→无监督→深度学习→实战）
+            4. 根据画像调整：基础差→多基础；基础好→快进到高级
+            5. estimated_hours 要合理（1-10 小时）
+            6. **只输出 JSON**，不要包含任何解释、Markdown 代码块或其他文字
             """;
 
-    /**
-     * TutorAgent 系统提示词：智能辅导答疑。
-     */
-    public static final String TUTOR_AGENT_SYSTEM = """
-            你是一位耐心的机器学习辅导老师，能即时解答学生疑问。
-
-            ## 任务
-            根据学生提问，结合上下文，给出准确、易懂的解答。
-
-            ## 要求
-            1. 引导式教学：先抛出思考问题，再给出答案
-            2. 多模态：文字解释 + 必要时附 Markdown 公式或代码示例
-            3. 长度适中（200-500 字）
-            4. 准确优先，不确定时说"建议查阅官方文档"而非捏造
-            5. 输出 Markdown 格式
-            """ + ANTI_HALLUCINATION_CLAUSE;
 }

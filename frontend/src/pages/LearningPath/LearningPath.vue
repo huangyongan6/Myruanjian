@@ -49,7 +49,7 @@ async function loadRecommend(): Promise<void> {
   if (studentId.value === null) return
   loadingRecommend.value = true
   try {
-    const real = await recommendResources(studentId.value, 5)
+    const real = await recommendResources(studentId.value, 8)
     if (real.length > 0) {
       recommendations.value = real
       return
@@ -58,14 +58,14 @@ async function loadRecommend(): Promise<void> {
     recommendations.value = mockRecommend(
       studentId.value,
       currentStepPoint.value,
-      5
+      8
     ) as RecommendedResource[]
   } catch {
     // 真实接口失败：同样 fallback 到 mock
     recommendations.value = mockRecommend(
       studentId.value,
       currentStepPoint.value,
-      5
+      8
     ) as RecommendedResource[]
   } finally {
     loadingRecommend.value = false
@@ -78,6 +78,8 @@ async function generate(): Promise<void> {
   if (result) {
     ElMessage.success('学习路径已生成')
   }
+  // 重新从后端获取最新数据，确保路径内容是最新的
+  await pathStore.fetchLatest(studentId.value)
   await loadRecommend()
 }
 

@@ -65,7 +65,6 @@ export function getResourceTypeTagType(
 export function getResourceTypeIcon(type?: string): string {
   const map: Record<string, string> = {
     doc: 'Document',
-    mindmap: 'Share',
     quiz: 'EditPen',
     reading: 'Reading',
     code: 'Cpu'

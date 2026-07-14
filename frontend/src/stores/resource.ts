@@ -132,10 +132,6 @@ export function parseDoc(resource: LearningResource): DocContent | null {
   return parseResourceContent<DocContent>(resource)
 }
 
-export function parseMindMap(resource: LearningResource): MindMapContent | null {
-  return parseResourceContent<MindMapContent>(resource)
-}
-
 export function parseQuiz(resource: LearningResource): QuizContent | null {
   return parseResourceContent<QuizContent>(resource)
 }
@@ -146,4 +142,8 @@ export function parseReading(resource: LearningResource): ReadingContent | null 
 
 export function parseCode(resource: LearningResource): CodeContent | null {
   return parseResourceContent<CodeContent>(resource)
+}
+
+export function parseMindMap(resource: LearningResource): MindMapContent | null {
+  return parseResourceContent<MindMapContent>(resource)
 }

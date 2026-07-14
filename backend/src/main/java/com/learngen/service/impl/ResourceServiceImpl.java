@@ -41,7 +41,7 @@ public class ResourceServiceImpl implements ResourceService {
     private final RedisCacheSupport cache;
 
     private static final java.util.Set<String> SUPPORTED_TYPES =
-            java.util.Set.of("doc", "mindmap", "quiz", "reading", "code", "path", "tutor");
+            java.util.Set.of("doc", "quiz", "reading", "code", "path");
 
     /** 注入 Agent 上下文的知识库正文长度上限，避免 prompt 过长触发 10907 错误码。 */
     private static final int KNOWLEDGE_PREVIEW_MAX = 1500;
@@ -164,12 +164,10 @@ public class ResourceServiceImpl implements ResourceService {
     private String buildTitle(String type, String knowledgePoint) {
         return switch (type) {
             case "doc" -> knowledgePoint + " 课程讲解";
-            case "mindmap" -> knowledgePoint + " 思维导图";
             case "quiz" -> knowledgePoint + " 练习题";
             case "reading" -> knowledgePoint + " 拓展阅读";
             case "code" -> knowledgePoint + " 代码实操";
             case "path" -> knowledgePoint + " 学习路径";
-            case "tutor" -> knowledgePoint + " 答疑";
             default -> knowledgePoint;
         };
     }

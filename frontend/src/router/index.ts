@@ -40,12 +40,6 @@ const router = createRouter({
       meta: { title: '学习路径' }
     },
     {
-      path: '/tutor',
-      name: 'Tutor',
-      component: () => import('@/pages/TutorPage/TutorPage.vue'),
-      meta: { title: '智能辅导' }
-    },
-    {
       path: '/dashboard',
       name: 'Dashboard',
       component: () => import('@/pages/Dashboard/Dashboard.vue'),

@@ -27,7 +27,7 @@ import java.util.stream.Collectors;
 @Component
 public class Orchestrator {
 
-    /** key = agentType（profile / doc / mindmap / quiz / reading / code / path / tutor） */
+    /** key = agentType（profile / doc / quiz / reading / code / path） */
     private final Map<String, AgentBase> agentByType;
     private final KnowledgeRetrievalService knowledgeRetrievalService;
 

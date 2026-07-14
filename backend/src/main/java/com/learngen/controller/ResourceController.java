@@ -32,7 +32,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/resources")
 @RequiredArgsConstructor
-@Tag(name = "学习资源", description = "7 种资源类型生成与查询：doc / mindmap / quiz / reading / code / path / tutor")
+@Tag(name = "学习资源", description = "5 种资源类型生成与查询：doc / quiz / reading / code / path")
 public class ResourceController {
 
     private final ResourceService resourceService;

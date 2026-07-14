@@ -17,7 +17,7 @@ export interface DocContent {
  * 知识点思维导图内容。
  */
 export interface MindMapNode {
-  name: string
+  content: string
   children?: MindMapNode[]
 }
 

@@ -41,7 +41,7 @@ spark:
   read-timeout-seconds: 60
   # 单次请求最大等待时长（含整个 SSE 流），超过则主动中断避免线程挂死
   total-timeout-seconds: 120
-  temperature: 0.5
+  temperature: 0.8
   max-tokens: 2048
 
   primary:

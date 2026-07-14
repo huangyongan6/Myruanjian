@@ -9,6 +9,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -42,8 +43,24 @@ public class PathController {
         return Result.success(pathService.getLatest(studentId));
     }
 
+    /**
+     * 更新学习路径进度：将 currentStep 推进到指定位置。
+     */
+    @PutMapping("/{studentId}/current-step")
+    public Result<LearningPath> updateCurrentStep(@PathVariable Long studentId,
+                                                   @RequestBody UpdateCurrentStepRequest request) {
+        log.info("更新学习进度 studentId={} currentStep={}", studentId, request.getCurrentStep());
+        LearningPath path = pathService.updateCurrentStep(studentId, request.getCurrentStep());
+        return Result.success(path);
+    }
+
     @Data
     public static class GenerateRequest {
         private Long studentId;
+    }
+
+    @Data
+    public static class UpdateCurrentStepRequest {
+        private Integer currentStep;
     }
 }

@@ -11,6 +11,7 @@ const emit = defineEmits<{ (e: 'submitted', scorePercent: number): void }>()
 
 interface AnswerState {
   selected: string[]
+  textAnswer: string
   revealed: boolean
 }
 
@@ -20,13 +21,17 @@ const submitted = ref(false)
 
 function ensureAnswer(index: number): AnswerState {
   if (!answers.value[index]) {
-    answers.value[index] = { selected: [], revealed: false }
+    answers.value[index] = { selected: [], textAnswer: '', revealed: false }
   }
   return answers.value[index]!
 }
 
 function isMulti(question: QuizQuestion): boolean {
   return question.type === 'multiple'
+}
+
+function isShort(question: QuizQuestion): boolean {
+  return question.type === 'short'
 }
 
 function isOptionSelected(qIndex: number, option: string): boolean {
@@ -113,14 +118,26 @@ function reset(): void {
         <template #title>
           <div class="quiz-card__title">
             <span class="quiz-card__index">第 {{ index + 1 }} 题</span>
-            <el-tag size="small" :type="isMulti(q) ? 'warning' : 'info'">
-              {{ isMulti(q) ? '多选' : q.type === 'truefalse' ? '判断' : '单选' }}
+            <el-tag size="small" :type="isMulti(q) ? 'warning' : isShort(q) ? 'success' : 'info'">
+              {{ isMulti(q) ? '多选' : isShort(q) ? '简答' : q.type === 'truefalse' ? '判断' : '单选' }}
             </el-tag>
             <span class="quiz-card__question">{{ q.question }}</span>
           </div>
         </template>
 
-        <div class="quiz-card__options">
+        <!-- 简答题：显示输入框 -->
+        <div v-if="isShort(q)" class="quiz-card__short">
+          <el-input
+            v-model="ensureAnswer(index).textAnswer"
+            type="textarea"
+            :rows="3"
+            placeholder="请输入你的答案..."
+            :disabled="submitted"
+          />
+        </div>
+
+        <!-- 选择题：显示选项 -->
+        <div v-else class="quiz-card__options">
           <div
             v-for="option in q.options ?? []"
             :key="option"
@@ -137,8 +154,16 @@ function reset(): void {
         </div>
 
         <div v-if="submitted" class="quiz-card__explanation">
-          <strong>正确答案：</strong>
-          <span>{{ Array.isArray(q.answer) ? q.answer.join('、') : q.answer }}</span>
+          <template v-if="isShort(q)">
+            <div class="quiz-card__answer-box">
+              <strong>参考答案：</strong>
+              <p class="quiz-card__answer-text">{{ Array.isArray(q.answer) ? q.answer.join('') : q.answer }}</p>
+            </div>
+          </template>
+          <template v-else>
+            <strong>正确答案：</strong>
+            <span>{{ Array.isArray(q.answer) ? q.answer.join('、') : q.answer }}</span>
+          </template>
           <div v-if="q.explanation" class="quiz-card__explanation-text">
             <strong>解析：</strong>{{ q.explanation }}
           </div>
@@ -207,6 +232,17 @@ function reset(): void {
     font-size: 13px;
     color: $text-regular;
     &-text { margin-top: $spacing-sm; color: $text-secondary; }
+  }
+  &__short {
+    padding: $spacing-sm 0;
+  }
+  &__answer-box {
+    margin-bottom: $spacing-sm;
+  }
+  &__answer-text {
+    margin: $spacing-xs 0 0;
+    color: $success-color;
+    font-size: 14px;
   }
   &__actions {
     margin-top: $spacing-lg;

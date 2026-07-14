@@ -31,6 +31,8 @@ export const useChatStore = defineStore('chat', () => {
   const currentAgent = ref<string | null>(null)
   const loading = ref(false)
   const error = ref<string | null>(null)
+  /** 流式输出是否处于进行中状态（用户可主动终止） */
+  const isStreamingActive = ref(false)
 
   // 每个学生独立的"是否还有更早历史"标记。true / undefined 都视为可能还有。
   const hasMore = ref<Record<number, boolean>>({})
@@ -70,6 +72,7 @@ export const useChatStore = defineStore('chat', () => {
         agentType,
         startedAt: Date.now()
       }
+      isStreamingActive.value = true
     } else {
       streamingBuffer.value.content += chunk
       if (agentType) streamingBuffer.value.agentType = agentType
@@ -82,7 +85,22 @@ export const useChatStore = defineStore('chat', () => {
     const msg = appendMessage(buffer.studentId, 'assistant', buffer.content, buffer.agentType)
     streamingBuffer.value = null
     currentAgent.value = null
+    isStreamingActive.value = false
     return msg
+  }
+
+  /**
+   * 取消正在进行的流式输出：将当前流式内容直接追加为用户消息，
+   * 相当于用户主动中断 AI 回答并发送了新消息。
+   */
+  function cancelStream(): void {
+    if (!streamingBuffer.value) return
+    const buffer = streamingBuffer.value
+    // 把 AI 未完成的回答追加到用户消息（表示用户中断了 AI 并继续提问）
+    streamingBuffer.value = null
+    currentAgent.value = null
+    isStreamingActive.value = false
+    // 不调用 appendMessage，仅仅是清空流式缓冲
   }
 
   /**
@@ -174,10 +192,12 @@ export const useChatStore = defineStore('chat', () => {
     error,
     hasMore,
     loadingMore,
+    isStreamingActive,
     getMessages,
     appendMessage,
     appendStreamChunk,
     finalizeStream,
+    cancelStream,
     loadHistory,
     loadMoreHistory,
     clearHistory

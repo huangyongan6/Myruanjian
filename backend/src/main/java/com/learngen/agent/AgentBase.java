@@ -5,7 +5,7 @@ import lombok.Getter;
 /**
  * Agent 抽象基类。
  *
- * <p>对应 CLAUDE.md §4.1。所有 8 个 Agent 继承此类，统一被 Orchestrator 通过
+ * <p>对应 CLAUDE.md §4.1。所有 6 个 Agent 继承此类，统一被 Orchestrator 通过
  * Spring 自动注入收集。
  */
 @Getter
@@ -17,7 +17,7 @@ public abstract class AgentBase {
     /** Agent 角色描述（中文，给前端展示或日志使用） */
     protected final String role;
 
-    /** Agent 类型标识：profile / doc / mindmap / quiz / reading / code / path / tutor */
+    /** Agent 类型标识：profile / doc / quiz / reading / code / path */
     protected final String agentType;
 
     protected AgentBase(String name, String role, String agentType) {

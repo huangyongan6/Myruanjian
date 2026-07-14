@@ -61,7 +61,7 @@ DROP TABLE IF EXISTS learning_resource;
 CREATE TABLE learning_resource (
     id               BIGINT PRIMARY KEY AUTO_INCREMENT,
     student_id       BIGINT NOT NULL COMMENT '学生ID',
-    type             VARCHAR(30) NOT NULL COMMENT '资源类型：doc / mindmap / quiz / reading / code',
+    type             VARCHAR(30) NOT NULL COMMENT '资源类型：doc / quiz / reading / code',
     title            VARCHAR(200) NOT NULL COMMENT '资源标题',
     content          JSON NOT NULL COMMENT '资源内容（JSON存储）',
     knowledge_point  VARCHAR(100) DEFAULT NULL COMMENT '关联知识点',

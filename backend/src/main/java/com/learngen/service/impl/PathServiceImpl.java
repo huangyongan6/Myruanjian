@@ -7,8 +7,10 @@ import com.learngen.exception.BusinessException;
 import com.learngen.mapper.LearningPathMapper;
 import com.learngen.model.KnowledgePoint;
 import com.learngen.model.LearningPath;
+import com.learngen.model.LearningRecord;
 import com.learngen.model.StudentProfile;
 import com.learngen.service.KnowledgeBaseService;
+import com.learngen.service.LearningRecordService;
 import com.learngen.service.PathService;
 import com.learngen.service.ProfileService;
 import lombok.RequiredArgsConstructor;
@@ -41,6 +43,7 @@ public class PathServiceImpl implements PathService {
     private final LearningPathMapper pathMapper;
     private final ProfileService profileService;
     private final KnowledgeBaseService knowledgeBaseService;
+    private final LearningRecordService recordService;
 
     /** 解析 steps 数量（用正则粗略提取，便于先存元数据）。 */
     private static final Pattern STEPS_PATTERN = Pattern.compile("\"step\"\\s*:\\s*(\\d+)");
@@ -57,15 +60,25 @@ public class PathServiceImpl implements PathService {
             throw new BusinessException(400, "请先完成画像构建再生成路径");
         }
 
+        // 获取学生学习历史（已完成的动作和资源）
+        List<LearningRecord> history = recordService.listByStudent(studentId);
+        // 获取已有的学习路径（当前进度）
+        LearningPath existingPath = null;
+        try {
+            existingPath = getLatest(studentId);
+        } catch (BusinessException e) {
+            // 没有旧路径，第一次生成
+        }
+
         // C1：拉取知识库 6 模块清单，拼成图谱摘要注入 context。
         // A：context.knowledge_preview 会被 TextOutputAgent.buildUserInput 自动拼到 user prompt。
         Map<String, Object> context = buildKnowledgeContext();
 
-        // 把画像 JSON 序列化作为 content，便于模型读取
+        // 把画像 JSON 序列化 + 学习历史作为 content，便于模型读取
         AgentMessage result = orchestrator.dispatch("path", AgentMessage.builder()
                 .studentId(studentId)
                 .role("user")
-                .content(buildContext(profile))
+                .content(buildContext(profile, history, existingPath))
                 .context(context)
                 .build());
 
@@ -83,9 +96,9 @@ public class PathServiceImpl implements PathService {
         target.setStudentId(studentId);
         target.setTotalSteps(totalSteps);
         target.setPathData(payload);
+        target.setCurrentStep(0); // 重新生成时重置进度
         target.setUpdatedAt(LocalDateTime.now());
         if (existing == null) {
-            target.setCurrentStep(0);
             pathMapper.insert(target);
             log.info("学习路径创建 studentId={} id={}", studentId, target.getId());
         } else {
@@ -105,6 +118,16 @@ public class PathServiceImpl implements PathService {
         if (path == null) {
             throw new BusinessException(404, "学习路径不存在：studentId=" + studentId);
         }
+        return path;
+    }
+
+    @Override
+    public LearningPath updateCurrentStep(Long studentId, int currentStep) {
+        LearningPath path = getLatest(studentId);
+        path.setCurrentStep(currentStep);
+        path.setUpdatedAt(LocalDateTime.now());
+        pathMapper.updateById(path);
+        log.info("学习进度更新 studentId={} currentStep={}", studentId, currentStep);
         return path;
     }
 
@@ -141,7 +164,8 @@ public class PathServiceImpl implements PathService {
     }
 
     /** 把画像序列化为 JSON 字符串传入 Agent 作为上下文。 */
-    private String buildContext(StudentProfile profile) {
+    private String buildContext(StudentProfile profile, List<LearningRecord> history,
+                                 LearningPath existingPath) {
         StringBuilder sb = new StringBuilder();
         sb.append("学生画像：{");
         sb.append("\"knowledge_base\":").append(nullSafe(profile.getKnowledgeBase())).append(',');
@@ -150,7 +174,52 @@ public class PathServiceImpl implements PathService {
         sb.append("\"weak_points\":").append(nullSafe(profile.getWeakPoints())).append(',');
         sb.append("\"learning_pace\":").append(nullSafe(profile.getLearningPace())).append(',');
         sb.append("\"interest_area\":").append(nullSafe(profile.getInterestArea()));
-        sb.append('}');
+        sb.append("}\n\n");
+
+        // 加入学习历史记录
+        if (!history.isEmpty()) {
+            sb.append("学生学习历史（最近 ").append(Math.min(history.size(), 20)).append(" 条）：\n");
+            // 按时间倒序取最近20条
+            for (int i = history.size() - 1; i >= Math.max(0, history.size() - 20); i--) {
+                LearningRecord r = history.get(i);
+                sb.append("- 动作：").append(r.getAction());
+                if (r.getResourceId() != null) sb.append("，资源ID：").append(r.getResourceId());
+                if (r.getDuration() != null) sb.append("，时长：").append(r.getDuration()).append("秒");
+                if (r.getScore() != null) sb.append("，得分：").append(r.getScore());
+                if (r.getCreatedAt() != null) sb.append("，时间：").append(r.getCreatedAt());
+                sb.append('\n');
+            }
+            sb.append('\n');
+        }
+
+        // 加入当前路径进度
+        if (existingPath != null) {
+            sb.append("当前学习路径进度：已完成 ").append(existingPath.getCurrentStep())
+              .append(" / ").append(existingPath.getTotalSteps()).append(" 步\n");
+            // 解析 pathData 中的 steps 标题
+            try {
+                com.fasterxml.jackson.databind.ObjectMapper mapper = new com.fasterxml.jackson.databind.ObjectMapper();
+                com.fasterxml.jackson.databind.JsonNode pathData = mapper.readTree(existingPath.getPathData());
+                com.fasterxml.jackson.databind.JsonNode steps = pathData.get("steps");
+                if (steps != null && steps.isArray()) {
+                    sb.append("已完成步骤：");
+                    for (int i = 0; i < Math.min(existingPath.getCurrentStep(), steps.size()); i++) {
+                        com.fasterxml.jackson.databind.JsonNode step = steps.get(i);
+                        String title = step.has("title") ? step.get("title").asText() : ("步骤" + (i + 1));
+                        sb.append("[").append(title).append("] ");
+                    }
+                    sb.append("\n待学习步骤：");
+                    for (int i = existingPath.getCurrentStep(); i < steps.size(); i++) {
+                        com.fasterxml.jackson.databind.JsonNode step = steps.get(i);
+                        String title = step.has("title") ? step.get("title").asText() : ("步骤" + (i + 1));
+                        sb.append("[").append(title).append("] ");
+                    }
+                    sb.append('\n');
+                }
+            } catch (Exception e) {
+                log.debug("解析已有路径失败：{}", e.getMessage());
+            }
+        }
         return sb.toString();
     }
 

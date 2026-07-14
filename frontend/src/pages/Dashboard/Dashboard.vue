@@ -44,24 +44,22 @@ const ACTION = {
 } as const
 
 /**
- * 一次真实学习投入产生的"有效时长"：完成资源 + 答题。
+ * 一次真实学习投入产生的"有效时长"：完成资源 + 答题 + 浏览（有实际时长）。
  *
- * <p>说明：view 行为通常是"打开资源"的瞬时事件，duration 多为 0 或缺失，
- * 计入"累计学习时长"会污染统计口径。quiz 时长是答题耗时，complete 时长
- * 是实际学习资源耗时，二者合起来才反映真实学习投入。该口径与"亮点 /
- * 建议"中的"学习时长"语义保持一致。
+ * <p>说明：任何学习行为（view / complete / quiz）只要有 duration 就计入累计时长。
+ * view 行为在关闭详情弹窗时会传入实际浏览时长；complete 和 quiz 行为如果传入了
+ * duration 也会被计入。该口径与"亮点 / 建议"中的"学习时长"语义保持一致。
  */
 function isEffectiveLearningRecord(r: LearningRecord): boolean {
-  return r.action === ACTION.COMPLETE || r.action === ACTION.QUIZ
+  return (r.duration ?? 0) > 0
 }
 
 /**
- * 累计学习时长（秒）：只统计 complete + quiz 的 duration 之和。
+ * 累计学习时长（秒）：统计所有有实际时长（duration > 0）的记录之和。
  *
- * <p>说明：后端 {@code LearningRecordServiceImpl#evaluate} 当前会累加所有
- * 行为（含 view）的 duration，而 view 通常是"打开资源"的瞬时事件，
- * 计入"累计学习时长"会污染统计口径。前端派生时只保留 complete + quiz
- * 的有效学习时长，并优先采用该派生结果；后端 report 字段仅作缺失兜底。
+ * <p>说明：前端派生时只保留有实际时长的记录（duration > 0），这样无论是
+ * 浏览资源（关闭弹窗时结算）、完成资源还是答题，只要有实际时长都会被计入。
+ * 后端 report 字段仅作缺失兜底。
  */
 const totalDuration = computed(() => {
   return records.value
@@ -69,11 +67,16 @@ const totalDuration = computed(() => {
     .reduce((acc, r) => acc + (r.duration ?? 0), 0)
 })
 
-/** 浏览资源次数：以 evaluate 报告为权威，缺失时按前端 records 兜底 */
+/** 浏览资源数（去重）：以 evaluate 报告为权威，缺失时按前端 records 去重兜底 */
 const totalViewed = computed(() => {
   const fromReport = report.value?.viewCount
   if (typeof fromReport === 'number') return fromReport
-  return records.value.filter((r) => r.action === ACTION.VIEW).length
+  // 前端兜底：按 resourceId 去重，与后端 evaluate 语义保持一致
+  const viewed = new Set<number>()
+  records.value
+    .filter((r) => r.action === ACTION.VIEW && r.resourceId != null)
+    .forEach((r) => viewed.add(r.resourceId as number))
+  return viewed.size
 })
 
 /** 完成资源次数 */
@@ -332,12 +335,10 @@ function buildLineOption(): echarts.EChartsOption {
     yAxis: { type: 'value' },
     series: [
       {
-        type: 'line',
+        type: 'bar',
         data: values,
-        smooth: true,
-        lineStyle: { color: '#409eff' },
         itemStyle: { color: '#409eff' },
-        areaStyle: { color: 'rgba(64,158,255,0.2)' }
+        barWidth: '50%'
       }
     ]
   }

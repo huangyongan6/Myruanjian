@@ -179,7 +179,7 @@ onMounted(reload)
           {{ f.label }}
         </el-radio-button>
       </el-radio-group>
-      <el-button type="primary" @click="openGenerate">✨ 生成新资源</el-button>
+      <el-button type="primary" @click="openGenerate">✨ 搜索资源</el-button>
     </div>
 
     <ProgressTracker
@@ -215,6 +215,7 @@ onMounted(reload)
       v-model="detailVisible"
       :title="detailResource ? getResourceTypeLabel(detailResource.type) : '资源详情'"
       width="900px"
+      top="5vh"
       destroy-on-close
       @close="onDetailClose"
     >
@@ -230,7 +231,7 @@ onMounted(reload)
       </template>
     </el-dialog>
 
-    <el-dialog v-model="generateDialog" title="生成新资源" width="480px">
+    <el-dialog v-model="generateDialog" title="搜索资源" width="480px">
       <el-form label-width="80px">
         <el-form-item label="资源类型">
           <el-select v-model="generateType" style="width: 100%">
@@ -243,7 +244,7 @@ onMounted(reload)
       </el-form>
       <template #footer>
         <el-button @click="generateDialog = false">取消</el-button>
-        <el-button type="primary" :loading="loading" @click="confirmGenerate">开始生成</el-button>
+        <el-button type="primary" :loading="loading" @click="confirmGenerate">立即搜索</el-button>
       </template>
     </el-dialog>
   </div>

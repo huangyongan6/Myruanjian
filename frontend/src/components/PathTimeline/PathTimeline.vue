@@ -51,7 +51,7 @@ function stepTimestamp(index: number): string {
           </div>
           <div class="path-timeline__actions">
             <el-button
-              v-if="index > currentIndex"
+              v-if="index === currentIndex"
               size="small"
               type="primary"
               @click="emit('complete', index)"

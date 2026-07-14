@@ -1,69 +1,203 @@
 <script setup lang="ts">
-import { onMounted, onBeforeUnmount, ref, watch } from 'vue'
-import { Markmap } from 'markmap-view'
+import { ref, watch, onMounted } from 'vue'
 import type { MindMapNode } from '@/types/resource'
 
 interface Props {
-  tree: MindMapNode | null
+  tree: MindMapNode | null | undefined
 }
 const props = defineProps<Props>()
 
-const containerRef = ref<HTMLDivElement | null>(null)
-let markmap: Markmap | null = null
+const expandedNodes = ref<Set<string>>(new Set())
 
-function render(): void {
-  if (!containerRef.value) return
-  if (!markmap) {
-    // markmap-view 需要 SVG 容器；创建一个并附加到 div 中
-    const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg')
-    containerRef.value.appendChild(svg)
-    markmap = Markmap.create(svg, {
-      // markmap-view 的 IMarkmapOptions 类型较新，这里用宽松选项
-      ...({ maxWidth: 320 } as Record<string, unknown>),
-      color: ((node: unknown) => {
-        const depth = ((node as { state?: { depth?: number } }).state?.depth ?? 0) % 6
-        const palette = ['#409eff', '#67c23a', '#e6a23c', '#f56c6c', '#9c64f0', '#13c2c2']
-        return palette[depth] ?? '#409eff'
-      }) as never
-    })
+function toggleNode(path: string): void {
+  if (expandedNodes.value.has(path)) {
+    expandedNodes.value.delete(path)
+  } else {
+    expandedNodes.value.add(path)
   }
-  const data = props.tree ?? ({ name: '暂无内容' } as MindMapNode)
-  markmap.setData(data as never)
-  markmap.fit()
 }
 
-onMounted(render)
-watch(
-  () => props.tree,
-  () => render(),
-  { deep: true }
-)
+function isExpanded(path: string): boolean {
+  return expandedNodes.value.has(path)
+}
 
-onBeforeUnmount(() => {
-  markmap?.destroy()
-  markmap = null
+function expandAll(node: MindMapNode, path: string, depth: number): void {
+  if (depth < 2 && node.children?.length) {
+    expandedNodes.value.add(path)
+    node.children.forEach((child, idx) => {
+      expandAll(child, `${path}-${idx}`, depth + 1)
+    })
+  }
+}
+
+onMounted(() => {
+  if (props.tree) {
+    expandAll(props.tree, 'root', 0)
+  }
 })
+
+watch(() => props.tree, (newTree) => {
+  expandedNodes.value.clear()
+  if (newTree) {
+    expandAll(newTree, 'root', 0)
+  }
+}, { immediate: true })
 </script>
 
 <template>
-  <div class="mind-map-view">
-    <div v-if="!tree" class="empty-tip">未提供思维导图数据</div>
-    <div v-else ref="containerRef" class="mind-map-view__container" />
+  <div class="mind-map">
+    <div v-if="!tree" class="mind-map__empty">暂无思维导图数据，请先选择知识点生成资源</div>
+    <div v-else class="mind-map__container">
+      <!-- 根节点 -->
+      <div class="mind-map__level mind-map__level--root">
+        <div class="mind-map__node mind-map__node--root">
+          {{ tree.content }}
+        </div>
+      </div>
+
+      <!-- 第二层节点 -->
+      <div v-if="tree.children?.length" class="mind-map__level mind-map__level--1">
+        <div
+          v-for="(child, idx) in tree.children"
+          :key="idx"
+          class="mind-map__branch"
+        >
+          <div
+            class="mind-map__node mind-map__node--parent"
+            :class="{ 'is-expandable': child.children?.length }"
+            @click="child.children?.length && toggleNode(`root-${idx}`)"
+          >
+            <span class="mind-map__node-text">{{ child.content }}</span>
+            <span v-if="child.children?.length" class="mind-map__toggle">
+              {{ isExpanded(`root-${idx}`) ? '−' : '+' }}
+            </span>
+          </div>
+
+          <!-- 第三层节点 -->
+          <div v-if="isExpanded(`root-${idx}`) && child.children?.length" class="mind-map__children">
+            <div
+              v-for="(grandchild, gIdx) in child.children"
+              :key="gIdx"
+              class="mind-map__sub-branch"
+            >
+              <div class="mind-map__node mind-map__node--child">
+                {{ grandchild.content }}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
 <style scoped lang="scss">
-.mind-map-view {
+.mind-map {
   width: 100%;
-  height: 100%;
   min-height: 400px;
+  overflow: auto;
+  background: $bg-card;
+  border-radius: $radius-md;
+  padding: $spacing-lg;
+
+  &__empty {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 300px;
+    color: $text-secondary;
+  }
 
   &__container {
-    width: 100%;
-    height: 500px;
-    background: $bg-card;
-    border-radius: $radius-md;
-    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 60px;
+    min-width: 600px;
+  }
+
+  &__level {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 40px;
+
+    &--root {
+      margin-bottom: 20px;
+    }
+
+    &--1 {
+      width: 100%;
+    }
+  }
+
+  &__branch {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+  }
+
+  &__node {
+    padding: 10px 16px;
+    border-radius: 8px;
+    font-size: 14px;
+    text-align: center;
+    min-width: 80px;
+    max-width: 140px;
+    word-break: break-word;
+
+    &--root {
+      background: #409eff;
+      color: #fff;
+      font-weight: 600;
+      font-size: 16px;
+      padding: 14px 24px;
+      min-width: 120px;
+    }
+
+    &--parent {
+      background: #fff;
+      border: 2px solid #409eff;
+      color: #303133;
+
+      &.is-expandable {
+        cursor: pointer;
+        &:hover {
+          background: rgba(64, 158, 255, 0.1);
+        }
+      }
+    }
+
+    &--child {
+      background: rgba(103, 194, 58, 0.1);
+      border: 2px solid #67c23a;
+      color: #303133;
+    }
+  }
+
+  &__node-text {
+    display: block;
+  }
+
+  &__toggle {
+    display: inline-block;
+    margin-left: 4px;
+    font-weight: bold;
+    color: #409eff;
+  }
+
+  &__children {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+    margin-top: 16px;
+    justify-content: center;
+  }
+
+  &__sub-branch {
+    display: flex;
+    align-items: center;
   }
 }
 </style>

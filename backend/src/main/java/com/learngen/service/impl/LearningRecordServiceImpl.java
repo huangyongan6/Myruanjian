@@ -116,9 +116,16 @@ public class LearningRecordServiceImpl implements LearningRecordService {
         long totalDuration = 0;
         int scoredQuizzes = 0;
 
+        // 按 resourceId 去重：同一资源多次浏览只计一次
+        final Set<Long> viewedResourceIds = new java.util.HashSet<>();
         for (LearningRecord r : records) {
             switch (r.getAction()) {
-                case "view" -> viewCount++;
+                case "view" -> {
+                    viewCount++;
+                    if (r.getResourceId() != null) {
+                        viewedResourceIds.add(r.getResourceId());
+                    }
+                }
                 case "complete" -> completeCount++;
                 case "quiz" -> {
                     quizCount++;
@@ -129,10 +136,13 @@ public class LearningRecordServiceImpl implements LearningRecordService {
                 }
                 default -> { /* 忽略未知 action */ }
             }
-            if (r.getDuration() != null) {
+            // 只统计 complete 和 quiz 的学习时长，view 行为通常是瞬时事件不计入
+            if (r.getDuration() != null && (r.getAction().equals("complete") || r.getAction().equals("quiz"))) {
                 totalDuration += r.getDuration();
             }
         }
+        // 浏览资源量使用去重后的资源数
+        report.put("viewCount", viewedResourceIds.size());
 
         report.put("viewCount", viewCount);
         report.put("completeCount", completeCount);

@@ -5,7 +5,8 @@ export const STORAGE_KEYS = {
   CURRENT_STUDENT_ID: 'learngen:current_student_id',
   CURRENT_STUDENT: 'learngen:current_student',
   CHAT_HISTORY: 'learngen:chat_history',
-  PREFERRED_LANGUAGE: 'learngen:preferred_language'
+  PREFERRED_LANGUAGE: 'learngen:preferred_language',
+  LEARNING_PATH: 'learngen:learning_path'
 } as const
 
 export type StorageKey = (typeof STORAGE_KEYS)[keyof typeof STORAGE_KEYS]

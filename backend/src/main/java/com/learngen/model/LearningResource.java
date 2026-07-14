@@ -8,9 +8,9 @@ import lombok.Data;
 import java.time.LocalDateTime;
 
 /**
- * 学习资源实体（5 种类型，content 为 JSON）。
+ * 学习资源实体（4 种类型，content 为 JSON）。
  *
- * <p>对应表 {@code learning_resource}。type 取值：doc / mindmap / quiz / reading / code。
+ * <p>对应表 {@code learning_resource}。type 取值：doc / quiz / reading / code。
  */
 @Data
 @TableName("learning_resource")
@@ -22,7 +22,7 @@ public class LearningResource {
     /** 学生 ID */
     private Long studentId;
 
-    /** 资源类型：doc / mindmap / quiz / reading / code */
+    /** 资源类型：doc / quiz / reading / code */
     private String type;
 
     /** 资源标题 */

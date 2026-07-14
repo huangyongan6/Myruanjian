@@ -30,5 +30,6 @@ export interface ChatResponse {
   type: 'message' | 'progress' | 'resource' | 'error' | 'done'
   content: string
   timestamp: string
+  agentType?: string
   payload?: unknown
 }

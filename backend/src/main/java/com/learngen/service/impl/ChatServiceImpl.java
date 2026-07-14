@@ -23,13 +23,11 @@ import java.util.function.Consumer;
  * <ul>
  *   <li>首次对话/介绍自己 → profile</li>
  *   <li>讲解/解释/什么是 → doc</li>
- *   <li>思维导图/梳理 → mindmap</li>
  *   <li>练习/题目/测试 → quiz</li>
  *   <li>推荐/阅读/论文 → reading</li>
  *   <li>代码/实操/案例 → code</li>
  *   <li>学习路径/规划/计划 → path</li>
- *   <li>问题/为什么/怎么理解 → tutor</li>
- *   <li>默认 → tutor</li>
+ *   <li>默认 → doc</li>
  * </ul>
  *
  * <p>同步入口 {@link #handleMessage} 内部委托流式入口 {@link #handleMessageStream}，
@@ -53,9 +51,6 @@ public class ChatServiceImpl implements ChatService {
             Map.entry("解释", "doc"),
             Map.entry("什么是", "doc"),
             Map.entry("原理", "doc"),
-            Map.entry("思维导图", "mindmap"),
-            Map.entry("知识结构", "mindmap"),
-            Map.entry("梳理", "mindmap"),
             Map.entry("练习", "quiz"),
             Map.entry("题目", "quiz"),
             Map.entry("测试", "quiz"),
@@ -71,11 +66,7 @@ public class ChatServiceImpl implements ChatService {
             Map.entry("路径", "path"),
             Map.entry("规划", "path"),
             Map.entry("计划", "path"),
-            Map.entry("怎么学", "path"),
-            Map.entry("问题", "tutor"),
-            Map.entry("疑问", "tutor"),
-            Map.entry("为什么", "tutor"),
-            Map.entry("怎么理解", "tutor")
+            Map.entry("怎么学", "path")
     );
 
     @Override
@@ -208,7 +199,7 @@ public class ChatServiceImpl implements ChatService {
 
     /**
      * 简单的关键词匹配意图识别。
-     * 第一版：遍历规则表，命中即返回；未命中默认 tutor。
+     * 第一版：遍历规则表，命中即返回；未命中默认 doc。
      */
     String recognizeIntent(String input) {
         for (Map.Entry<String, String> entry : INTENT_RULES.entrySet()) {
@@ -216,7 +207,7 @@ public class ChatServiceImpl implements ChatService {
                 return entry.getValue();
             }
         }
-        return "tutor";
+        return "doc";
     }
 
     private void persistMessage(Long studentId, String role, String content, String agentType) {

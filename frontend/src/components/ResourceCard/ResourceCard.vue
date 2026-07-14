@@ -71,9 +71,10 @@ const readingRawItems = computed<ReadingItem[]>(() => {
       <MarkdownRenderer v-if="resource.type === 'doc' && docContent" :content="docContent.markdown" />
       <div v-else-if="resource.type === 'doc'" class="empty-tip">暂无文档内容</div>
 
-      <div v-else-if="resource.type === 'mindmap' && mindMapContent" class="resource-card__mindmap">
-        <MindMapView :tree="mindMapContent.tree" />
-      </div>
+      <MindMapView
+        v-else-if="resource.type === 'mindmap' && mindMapContent"
+        :tree="mindMapContent.tree"
+      />
       <div v-else-if="resource.type === 'mindmap'" class="empty-tip">暂无思维导图</div>
 
       <QuizCard

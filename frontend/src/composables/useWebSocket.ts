@@ -22,6 +22,8 @@ export function useWebSocket(url: string) {
   let client: Client | null = null
   let retry = 0
   const MAX_RETRY = 5
+  /** 未连接时积压的待订阅请求（destination → callback），连接成功后统一执行 */
+  const pendingSubscriptions = new Map<string, (msg: IMessage) => void>()
 
   function buildClient(): Client {
     return new Client({
@@ -37,6 +39,14 @@ export function useWebSocket(url: string) {
         for (const [destination, sub] of subscriptions.entries()) {
           sub.id = client!.subscribe(destination, sub.callback).id
         }
+        // 立即执行所有积压的待订阅请求
+        for (const [destination, callback] of pendingSubscriptions.entries()) {
+          if (!subscriptions.has(destination)) {
+            const sub = client!.subscribe(destination, callback)
+            subscriptions.set(destination, { id: sub.id, callback })
+          }
+        }
+        pendingSubscriptions.clear()
       },
       onWebSocketClose: () => {
         connected.value = false
@@ -78,12 +88,17 @@ export function useWebSocket(url: string) {
     if (client?.connected) {
       const sub = client.subscribe(destination, callback)
       subscriptions.get(destination)!.id = sub.id
+    } else {
+      // 未连接时，缓存到待执行队列，连接成功后自动订阅
+      pendingSubscriptions.set(destination, callback)
     }
   }
 
   /**
    * 取消订阅单个目的地：用于切换上下文 / 组件卸装时清理指定订阅，
    * 而非断开整个 STOMP 连接（其他组件可能仍在用）。
+   *
+   * <p>同时清理该目的地在待执行回调队列中的订阅请求。
    */
   function unsubscribe(destination: string): void {
     const sub = subscriptions.get(destination)
@@ -95,6 +110,8 @@ export function useWebSocket(url: string) {
       }
     }
     subscriptions.delete(destination)
+    // 清理积压在 pendingSubscriptions 中的该目的地订阅请求
+    pendingSubscriptions.delete(destination)
   }
 
   function send(destination: string, body: unknown): void {

@@ -21,3 +21,14 @@ export function getLatestPath(studentId: number): Promise<LearningPath> {
     method: 'GET'
   })
 }
+
+/**
+ * 更新学习路径进度。
+ */
+export function updatePathCurrentStep(studentId: number, currentStep: number): Promise<LearningPath> {
+  return request<LearningPath>({
+    url: `/paths/${studentId}/current-step`,
+    method: 'PUT',
+    data: { currentStep }
+  })
+}

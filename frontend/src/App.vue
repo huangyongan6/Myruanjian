@@ -18,7 +18,6 @@ const navItems: NavItem[] = [
   { path: '/profile', title: '学习画像', icon: 'DataAnalysis' },
   { path: '/resources', title: '资源中心', icon: 'Files' },
   { path: '/path', title: '学习路径', icon: 'Promotion' },
-  { path: '/tutor', title: '智能辅导', icon: 'Service' },
   { path: '/dashboard', title: '学习仪表盘', icon: 'Odometer' }
 ]
 
