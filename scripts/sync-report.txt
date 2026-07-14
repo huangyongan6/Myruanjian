@@ -1,0 +1,86 @@
+==============================================================================
+知识库同步差异报告（顶层 knowledge/ → backend .../resources/knowledge/）
+==============================================================================
+
+总计 31 行；按状态分组：
+  - split: 1
+  - mapped: 27
+  - extra-internal: 3
+
+模块   状态                 顶层行数     内部行数     行差     顶层路径
+------------------------------------------------------------------------------
+1    split              154      93       +61    knowledge/01-基础概念/偏差方差与过拟合欠拟合.md
+                                                   ↳ backend/.../knowledge/module1/bias-variance.md (split source)
+                                                   ℹ 拆篇：同时同步到 module1/bias-variance.md, module1/overfitting.md
+1    mapped             100      82       +18    knowledge/01-基础概念/数据集划分.md
+                                                   ↳ backend/.../knowledge/module1/data-split.md
+1    mapped             110      80       +30    knowledge/01-基础概念/机器学习定义.md
+                                                   ↳ backend/.../knowledge/module1/ml-definition.md
+1    mapped             142      102      +40    knowledge/01-基础概念/模型评估指标.md
+                                                   ↳ backend/.../knowledge/module1/evaluation-metrics.md
+2    mapped             111      110      +1     knowledge/02-经典算法/KNN.md
+                                                   ↳ backend/.../knowledge/module2/knn.md
+2    mapped             121      119      +2     knowledge/02-经典算法/SVM.md
+                                                   ↳ backend/.../knowledge/module2/svm.md
+2    mapped             142      84       +58    knowledge/02-经典算法/决策树.md
+                                                   ↳ backend/.../knowledge/module2/decision-tree.md
+2    mapped             118      114      +4     knowledge/02-经典算法/朴素贝叶斯.md
+                                                   ↳ backend/.../knowledge/module2/naive-bayes.md
+2    mapped             132      101      +31    knowledge/02-经典算法/线性回归.md
+                                                   ↳ backend/.../knowledge/module2/linear-regression.md
+2    mapped             113      92       +21    knowledge/02-经典算法/逻辑回归.md
+                                                   ↳ backend/.../knowledge/module2/logistic-regression.md
+2    mapped             103      102      +1     knowledge/02-经典算法/随机森林.md
+                                                   ↳ backend/.../knowledge/module2/random-forest.md
+2    mapped             139      138      +1     knowledge/02-经典算法/集成学习与XGBoost.md
+                                                   ↳ backend/.../knowledge/module2/ensemble-learning.md
+3    mapped             123      123      +0     knowledge/03-无监督学习/K-Means聚类.md
+                                                   ↳ backend/.../knowledge/module3/k-means.md
+3    mapped             127      127      +0     knowledge/03-无监督学习/PCA主成分分析.md
+                                                   ↳ backend/.../knowledge/module3/pca.md
+3    mapped             84       84       +0     knowledge/03-无监督学习/层次聚类.md
+                                                   ↳ backend/.../knowledge/module3/hierarchical-clustering.md
+3    mapped             126      126      +0     knowledge/03-无监督学习/降维与可视化.md
+                                                   ↳ backend/.../knowledge/module3/dim-reduction.md
+4    mapped             130      130      +0     knowledge/04-深度学习/CNN卷积神经网络.md
+                                                   ↳ backend/.../knowledge/module4/cnn.md
+4    mapped             108      108      +0     knowledge/04-深度学习/RNN与LSTM.md
+                                                   ↳ backend/.../knowledge/module4/rnn-lstm.md
+4    mapped             129      129      +0     knowledge/04-深度学习/Transformer基础.md
+                                                   ↳ backend/.../knowledge/module4/transformer.md
+4    mapped             146      146      +0     knowledge/04-深度学习/神经网络基础.md
+                                                   ↳ backend/.../knowledge/module4/neural-network.md
+5    mapped             87       87       +0     knowledge/05-实践工具/NumPy数据处理.md
+                                                   ↳ backend/.../knowledge/module5/numpy.md
+5    mapped             93       93       +0     knowledge/05-实践工具/Pandas数据处理.md
+                                                   ↳ backend/.../knowledge/module5/pandas.md
+5    mapped             148      148      +0     knowledge/05-实践工具/PyTorch入门.md
+                                                   ↳ backend/.../knowledge/module5/pytorch.md
+5    mapped             111      111      +0     knowledge/05-实践工具/Scikit-learn模型训练.md
+                                                   ↳ backend/.../knowledge/module5/sklearn.md
+6    mapped             119      104      +15    knowledge/06-项目实战/客户分群.md
+                                                   ↳ backend/.../knowledge/module6/customer-segmentation.md
+6    mapped             121      87       +34    knowledge/06-项目实战/房价预测.md
+                                                   ↳ backend/.../knowledge/module6/house-price.md
+6    mapped             140      96       +44    knowledge/06-项目实战/手写数字识别.md
+                                                   ↳ backend/.../knowledge/module6/mnist.md
+6    mapped             131      114      +17    knowledge/06-项目实战/文本情感分析.md
+                                                   ↳ backend/.../knowledge/module6/sentiment-analysis.md
+1    extra-internal     0        94       -94    (无对应顶层文件)
+                                                   ↳ backend/.../knowledge/module1/overfitting.md
+                                                   ℹ 内部有但顶层无原稿（独立补写/模板/拆篇产物），保留不动
+1    extra-internal     0        92       -92    (无对应顶层文件)
+                                                   ↳ backend/.../knowledge/module1/supervised-learning.md
+                                                   ℹ 内部有但顶层无原稿（独立补写/模板/拆篇产物），保留不动
+1    extra-internal     0        98       -98    (无对应顶层文件)
+                                                   ↳ backend/.../knowledge/module1/unsupervised-learning.md
+                                                   ℹ 内部有但顶层无原稿（独立补写/模板/拆篇产物），保留不动
+
+映射对：27；顶层更详 15 / 内部更详 0 / 一致 12
+
+建议：
+  1. 仔细 review 'mapped' 行中内部行数偏少但顶层有大量内容的情况——
+     这些是评估时可能露馅的'内容缩水'。
+  2. 'extra-top-level' 行需要在 MAPPING/SPLITS 里补映射，并同步
+     backend/src/main/resources/db/seed-knowledge.sql 增加 content_path 行。
+  3. 'extra-internal' 行通常无需处理。

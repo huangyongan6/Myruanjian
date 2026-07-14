@@ -1,0 +1,92 @@
+# 逻辑回归
+
+## 一、概念介绍
+
+逻辑回归（Logistic Regression）虽然名字里有「回归」，但实际是**分类**算法，主要用于二分类任务（如垃圾邮件识别、疾病诊断）。它通过 Sigmoid 函数将线性输出映射到 (0, 1) 区间，表示样本属于正类的概率。
+
+## 二、核心原理
+
+### 2.1 数学推导
+
+Sigmoid 函数：
+
+$$\sigma(z) = \frac{1}{1 + e^{-z}}$$
+
+预测概率：
+
+$$P(y=1 | \mathbf{x}) = \sigma(\mathbf{w}^\top \mathbf{x} + b) = \frac{1}{1 + e^{-(\mathbf{w}^\top \mathbf{x} + b)}}$$
+
+损失函数（交叉熵 / 对数损失）：
+
+$$L = -\frac{1}{m} \sum_{i=1}^{m} \left[ y^{(i)} \log \hat{y}^{(i)} + (1 - y^{(i)}) \log (1 - \hat{y}^{(i)}) \right]$$
+
+### 2.2 算法流程
+
+1. 准备数据（特征 + 二元标签）
+2. 特征归一化 / 标准化
+3. 初始化 $\mathbf{w}$、$b$
+4. 迭代训练：计算 $\hat{y}$ → 计算交叉熵损失 → 反向传播
+5. 阈值划分（默认 0.5）→ 计算准确率 / F1 / AUC
+
+## 三、代码实现
+
+```python
+from sklearn.linear_model import LogisticRegression
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import classification_report
+
+# 以鸢尾花二分类为例（仅取 setosa vs versicolor）
+from sklearn.datasets import load_iris
+iris = load_iris()
+X = iris.data[:100]
+y = iris.target[:100]
+
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+model = LogisticRegression(max_iter=200)
+model.fit(X_train, y_train)
+
+y_pred = model.predict(X_test)
+print(classification_report(y_test, y_pred))
+```
+
+**预期输出**：
+
+```
+              precision    recall  f1-score   support
+           0       1.00      1.00      1.00         9
+           1       1.00      1.00      1.00        11
+    accuracy                           1.00        20
+```
+
+## 四、适用场景
+
+✅ **适合**：
+- 二分类任务
+- 需要输出概率（而非仅类别）
+- 对模型可解释性要求高（系数即特征贡献）
+
+❌ **不适合**：
+- 多分类且类别数很多（考虑 Softmax 回归或神经网络）
+- 特征与目标关系高度非线性
+
+## 五、常见易错点
+
+1. **未做特征归一化**：梯度下降收敛慢或震荡
+2. **类别严重不平衡**：准确率高但召回率为 0，应使用 `class_weight='balanced'` 或过采样
+3. **多分类直接套二分类**：应使用 `LogisticRegression(multi_class='multinomial')`
+
+## 六、练习题
+
+1. 选择题：逻辑回归的输出值范围是？
+   - [ ] A. [-1, 1]
+   - [x] B. (0, 1)
+   - [ ] C. [0, 1]
+   - [ ] D. 全体实数
+
+2. 简答题：解释 Sigmoid 函数为什么能将线性输出转为概率。
+
+## 七、拓展阅读
+
+- 周志华《机器学习》第 3 章 3.3 节
+- Scikit-learn：https://scikit-learn.org/stable/modules/linear_model.html#logistic-regression

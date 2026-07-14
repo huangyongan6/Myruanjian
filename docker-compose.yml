@@ -1,0 +1,85 @@
+# =====================================================================
+# 学习多智能体系统 - 一键启动 docker-compose
+# 对应 CLAUDE.md §16.2 / doc/dev-env.md
+#
+# 使用方式：
+#   1. 复制 .env.example 为 .env 并填入真实凭据
+#   2. docker-compose up -d
+#   3. 访问 http://localhost:8080
+# =====================================================================
+
+version: '3.8'
+
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: learngen-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}
+      MYSQL_DATABASE: ${DB_NAME:-Random}
+    ports:
+      - "${DB_PORT:-3306}:3306"
+    volumes:
+      - ./data/mysql:/var/lib/mysql
+      - ./backend/src/main/resources/db/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro
+      - ./backend/src/main/resources/db/seed-knowledge.sql:/docker-entrypoint-initdb.d/02-seed.sql:ro
+    command:
+      --character-set-server=utf8mb4
+      --collation-server=utf8mb4_unicode_ci
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${DB_PASSWORD}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: learngen-redis
+    restart: unless-stopped
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    volumes:
+      - ./data/redis:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: learngen-backend
+    restart: unless-stopped
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      # 数据源
+      DB_HOST: mysql
+      DB_PORT: 3306
+      DB_NAME: ${DB_NAME:-Random}
+      DB_USER: root
+      DB_PASSWORD: ${DB_PASSWORD}
+      # Redis
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      # 讯飞星火（CLAUDE.md §14.1：通过环境变量注入，禁止硬编码；§20.1 主备切换）
+      SPARK_API_PASSWORD_PRIMARY: ${SPARK_API_PASSWORD_PRIMARY}
+      SPARK_API_PASSWORD_SECONDARY: ${SPARK_API_PASSWORD_SECONDARY:-}
+      SPARK_HOST: ${SPARK_HOST:-spark-api-open.xf-yun.com}
+      SPARK_MODEL: ${SPARK_MODEL:-generalv3.5}
+      # JVM
+      JAVA_OPTS: "-Xms512m -Xmx1024m"
+      # Spring Profile
+      SPRING_PROFILES_ACTIVE: prod
+    ports:
+      - "${BACKEND_PORT:-8080}:8080"
+
+networks:
+  default:
+    name: learngen-network

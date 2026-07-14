@@ -1,0 +1,84 @@
+# 决策树
+
+## 一、概念介绍
+
+决策树（Decision Tree）是一种树形结构的监督学习算法，可用于分类与回归。它通过一系列「if-else」规则对数据进行递归划分，每一层根据某个特征的阈值决定走左子树还是右子树，最终在叶节点给出预测结果。
+
+## 二、核心原理
+
+### 2.1 数学推导
+
+**信息熵**（衡量不确定性）：
+
+$$H(X) = -\sum_{i=1}^{n} p_i \log_2 p_i$$
+
+**信息增益**（ID3 算法）：
+
+$$IG(D, A) = H(D) - \sum_{v \in A} \frac{|D_v|}{|D|} H(D_v)$$
+
+**基尼系数**（CART 算法）：
+
+$$Gini(D) = 1 - \sum_{i=1}^{n} p_i^2$$
+
+### 2.2 算法流程
+
+1. 从根节点开始，计算所有特征对当前数据集的信息增益 / 基尼系数
+2. 选择最优特征划分
+3. 递归对子节点重复 1~2，直到满足停止条件（深度上限 / 节点样本数下限 / 纯度）
+4. 必要时剪枝（预剪枝 / 后剪枝）防止过拟合
+
+## 三、代码实现
+
+```python
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.datasets import load_iris
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import accuracy_score
+
+iris = load_iris()
+X_train, X_test, y_train, y_test = train_test_split(
+    iris.data, iris.target, test_size=0.3, random_state=42
+)
+
+# 限制最大深度防止过拟合
+model = DecisionTreeClassifier(max_depth=3, random_state=42)
+model.fit(X_train, y_train)
+
+y_pred = model.predict(X_test)
+print(f"Accuracy: {accuracy_score(y_test, y_pred):.2f}")
+```
+
+**预期输出**：`Accuracy: 0.96` 附近
+
+## 四、适用场景
+
+✅ **适合**：
+- 特征取值离散或可二值化
+- 需要可解释的规则（可视化决策路径）
+- 训练时间敏感（训练快、预测快）
+
+❌ **不适合**：
+- 数据噪声大（容易过拟合 → 用随机森林替代）
+- 需要强泛化能力（单棵树通常弱于集成方法）
+
+## 五、常见易错点
+
+1. **不限制最大深度**：训练集准确率 100% 但测试集暴跌（过拟合）
+2. **不剪枝**：同上
+3. **忽略特征归一化**：决策树对单调变换不敏感，归一化通常没必要
+4. **类别型特征直接喂入**：应先编码
+
+## 六、练习题
+
+1. 选择题：ID3 算法使用的特征选择准则是？
+   - [x] A. 信息增益
+   - [ ] B. 基尼系数
+   - [ ] C. 均方误差
+   - [ ] D. 互信息
+
+2. 简答题：解释预剪枝与后剪枝的区别。
+
+## 七、拓展阅读
+
+- 周志华《机器学习》第 4 章
+- Scikit-learn：https://scikit-learn.org/stable/modules/tree.html

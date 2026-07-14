@@ -1,0 +1,96 @@
+# 手写数字识别（分类项目）
+
+## 项目概述
+
+使用 CNN 对手写数字图片（MNIST 数据集）进行分类，是深度学习的"Hello World"项目。MNIST 包含 0-9 的手写数字图片，每张 28×28 像素的灰度图。
+
+## 完整代码
+
+```python
+import torch
+import torch.nn as nn
+import torch.optim as optim
+from torchvision import datasets, transforms
+from torch.utils.data import DataLoader
+
+# ========== 1. 数据准备 ==========
+transform = transforms.Compose([
+    transforms.ToTensor(),
+    transforms.Normalize((0.1307,), (0.3081,))
+])
+
+train_data = datasets.MNIST('./data', train=True, download=True, transform=transform)
+test_data  = datasets.MNIST('./data', train=False, transform=transform)
+train_loader = DataLoader(train_data, batch_size=64, shuffle=True)
+test_loader  = DataLoader(test_data, batch_size=1000)
+
+# ========== 2. 定义 CNN 模型 ==========
+class DigitCNN(nn.Module):
+    def __init__(self):
+        super().__init__()
+        self.features = nn.Sequential(
+            nn.Conv2d(1, 32, 3, padding=1),
+            nn.ReLU(),
+            nn.MaxPool2d(2),
+            nn.Conv2d(32, 64, 3, padding=1),
+            nn.ReLU(),
+            nn.MaxPool2d(2),
+        )
+        self.classifier = nn.Sequential(
+            nn.Flatten(),
+            nn.Linear(64 * 7 * 7, 128),
+            nn.ReLU(),
+            nn.Dropout(0.5),
+            nn.Linear(128, 10)
+        )
+
+    def forward(self, x):
+        x = self.features(x)
+        x = self.classifier(x)
+        return x
+
+# ========== 3. 训练 ==========
+device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+model = DigitCNN().to(device)
+criterion = nn.CrossEntropyLoss()
+optimizer = optim.Adam(model.parameters(), lr=0.001)
+
+for epoch in range(5):
+    model.train()
+    total_loss = 0
+    for batch_x, batch_y in train_loader:
+        batch_x, batch_y = batch_x.to(device), batch_y.to(device)
+        optimizer.zero_grad()
+        output = model(batch_x)
+        loss = criterion(output, batch_y)
+        loss.backward()
+        optimizer.step()
+        total_loss += loss.item()
+
+    # 评估
+    model.eval()
+    correct = 0
+    with torch.no_grad():
+        for batch_x, batch_y in test_loader:
+            batch_x, batch_y = batch_x.to(device), batch_y.to(device)
+            output = model(batch_x)
+            pred = output.argmax(dim=1)
+            correct += (pred == batch_y).sum().item()
+    acc = correct / len(test_data)
+    print(f"Epoch {epoch+1}, Loss: {total_loss/len(train_loader):.4f}, Test Acc: {acc:.4f}")
+```
+
+## 关键知识点
+
+- CNN 的卷积层、池化层、全连接层
+- 图像分类的完整流程
+- 训练过程可视化（loss 曲线、准确率曲线）
+
+## 学完应该掌握
+
+用 PyTorch 搭建 CNN 做图像分类，理解卷积操作和训练循环
+
+## 推荐阅读
+
+- PyTorch 官方 MNIST 教程
+- CS231n 卷积神经网络章节

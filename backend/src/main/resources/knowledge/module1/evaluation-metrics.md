@@ -1,0 +1,250 @@
+# 模型评估指标
+
+## 概念介绍
+
+评估模型的好坏需要明确的量化指标。不同的任务（分类、回归、排序）有不同的评估指标。比如分类问题关注"准确率"和"F1"，回归问题关注"MSE"和"R²"，不平衡分类问题还要看"AUC"。选错指标可能让模型朝着错误的方向优化——比如用准确率评估癌症筛查模型，但凡把所有样本都判为阴性都能拿到 99% 准确率，可这种模型毫无价值。
+
+评估指标还直接决定你"如何调参"。同一个模型，在不同指标下的"最优超参数"可能完全不一样。
+
+## 核心原理
+
+### 分类指标（基于混淆矩阵）
+
+对二分类，预测结果有四种情况：
+
+| 实际 \ 预测 | 正类 | 负类 |
+|------------|----|----|
+| **正类** | TP | FN |
+| **负类** | FP | TN |
+
+- **准确率（Accuracy）**：所有预测正确的比例 = (TP+TN) / 总数。数据平衡时用。
+- **精确率（Precision）**：预测为正的样本中实际为正的比例 = TP / (TP+FP)。
+- **召回率（Recall）**：实际为正的样本中被预测为正的比例 = TP / (TP+FN)。
+- **F1 Score**：精确率和召回率的调和平均 = 2*P*R / (P+R)。类别不平衡时优于准确率。
+- **AUC**：ROC 曲线下面积，衡量排序能力，对不平衡数据鲁棒。
+
+### 回归指标
+
+- **MSE（均方误差）**：Σ(ŷᵢ - yᵢ)² / n，对大误差更敏感。
+- **RMSE**：MSE 的平方根，与 y 同量纲。
+- **MAE（平均绝对误差）**：Σ|ŷᵢ - yᵢ| / n，对异常值不敏感。
+- **R²**：决定系数，越接近 1 越好。
+
+## 代码实现
+
+```python
+from sklearn.datasets import load_iris
+from sklearn.model_selection import train_test_split
+from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import (accuracy_score, precision_score, recall_score,
+                             f1_score, classification_report,
+                             mean_squared_error, r2_score, mean_absolute_error)
+import numpy as np
+
+# ========== 分类指标 ==========
+X, y = load_iris(return_X_y=True)
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=42, stratify=y)
+
+model = LogisticRegression(max_iter=1000)
+model.fit(X_train, y_train)
+y_pred = model.predict(X_test)
+
+print(f"准确率: {accuracy_score(y_test, y_pred):.4f}")
+print(f"宏精确率: {precision_score(y_test, y_pred, average='macro'):.4f}")
+print(f"宏召回率: {recall_score(y_test, y_pred, average='macro'):.4f}")
+print(f"宏 F1:   {f1_score(y_test, y_pred, average='macro'):.4f}")
+print("\n完整分类报告:")
+print(classification_report(y_test, y_pred, target_names=['setosa', 'versicolor', 'virginica']))
+
+# ========== 回归指标 ==========
+y_true = np.array([3.0, -0.5, 2.0, 7.0])
+y_pred_r = np.array([2.5, 0.0, 2.1, 7.8])
+
+print(f"MSE: {mean_squared_error(y_true, y_pred_r):.4f}")
+print(f"RMSE: {np.sqrt(mean_squared_error(y_true, y_pred_r)):.4f}")
+print(f"MAE:  {mean_absolute_error(y_true, y_pred_r):.4f}")
+print(f"R²:   {r2_score(y_true, y_pred_r):.4f}")
+```
+
+## 适用场景
+
+| 场景 | 推荐指标 |
+|------|---------|
+| 类别平衡的分类 | Accuracy |
+| 类别不平衡的分类 | F1 / AUC |
+| 不希望漏报（如疾病筛查） | Recall |
+| 不希望误报（如垃圾邮件误判） | Precision |
+| 回归问题整体误差 | RMSE |
+| 有较多异常值的回归 | MAE |
+| 不同模型对比 | R² |
+
+## 常见易错点
+
+1. **不平衡数据用 Accuracy**：99% 负类，预测全为负就能拿到 99% Accuracy，没意义。
+2. **不区分业务场景乱用指标**：癌症筛查看 Recall，垃圾邮件过滤看 Precision。
+3. **只看训练集指标**：必须用测试集评估，才反映真实表现。
+4. **跨数据集比较 RMSE**：A 任务 RMSE=10 看起来很大，B 任务 RMSE=0.1 看起来很小，但 y 的量纲不同无法直接比。
+
+## 练习题
+
+1. **选择题**：在癌症筛查中，宁可误报也不要漏报，这时应重点关注哪个指标？（A）Accuracy （B）Precision （C）Recall （D）F1
+   - 答案：C
+
+2. **填空题**：F1 是____和____的调和平均。
+   - 答案：精确率（Precision）；召回率（Recall）。
+
+3. **简答题**：RMSE 和 MAE 的主要区别是什么？
+   - 答案：RMSE 对大误差惩罚更重（平方放大），MAE 对所有误差一视同仁；RMSE 对异常值更敏感，MAE 更稳健。
+
+## 推荐阅读
+
+- 周志华《机器学习》（西瓜书）第2章
+- Scikit-learn 评估指标文档：https://scikit-learn.org/stable/modules/model_evaluation.html
+
+<!-- ============================================ -->
+<!-- 以下内容由 scripts/sync-knowledge.py 同步自顶层原稿 knowledge/ -->
+<!-- 仅供阅读参考；正文以本文件原有章节为准，重复段落由维护者清理。 -->
+<!-- ============================================ -->
+
+# 模型评估指标
+
+## 概念介绍
+
+训练完模型后，我们需要用量化指标来衡量模型的好坏。就像考试用分数衡量学习效果，模型也需要"打分"。不同的任务需要不同的评估指标：分类问题看准确率、精确率、召回率等；回归问题看均方误差、R²等。选错评估指标会导致模型优化方向错误——比如在癌症检测中，准确率高但漏检率高是不可接受的。
+
+## 核心原理
+
+### 分类问题指标
+
+先理解混淆矩阵的四个基础值：
+
+```
+                  预测为正    预测为负
+实际为正（真正例）   TP          FN
+实际为负（真负例）   FP          TN
+```
+
+- **TP（True Positive）**：真正例，实际为正，预测也为正
+- **TN（True Negative）**：真负例，实际为负，预测也为负
+- **FP（False Positive）**：假正例，实际为负，但预测为正（误报）
+- **FN（False Negative）**：假负例，实际为正，但预测为负（漏报）
+
+**准确率（Accuracy）**：预测正确的比例
+
+```
+Accuracy = (TP + TN) / (TP + TN + FP + FN)
+```
+
+**精确率（Precision）**：预测为正的样本中，真正为正的比例
+
+```
+Precision = TP / (TP + FP)
+```
+
+**召回率（Recall）**：实际为正的样本中，被正确预测的比例
+
+```
+Recall = TP / (TP + FN)
+```
+
+**F1分数**：精确率和召回率的调和平均
+
+```
+F1 = 2 * Precision * Recall / (Precision + Recall)
+```
+
+**AUC-ROC**：ROC曲线下面积，衡量模型区分正负样本的能力，取值0-1，越大越好。
+
+### 回归问题指标
+
+**均方误差（MSE）**：
+
+```
+MSE = (1/n) * Σ(yi - ŷi)²
+```
+
+**均方根误差（RMSE）**：
+
+```
+RMSE = √MSE
+```
+
+**平均绝对误差（MAE）**：
+
+```
+MAE = (1/n) * Σ|yi - ŷi|
+```
+
+**R²分数（决定系数）**：
+
+```
+R² = 1 - Σ(yi - ŷi)² / Σ(yi - ȳ)²
+```
+
+R²越接近1越好，等于0表示模型和直接预测均值一样差。
+
+## 代码实现
+
+```python
+from sklearn.metrics import (accuracy_score, precision_score, recall_score,
+                             f1_score, classification_report, confusion_matrix,
+                             roc_auc_score, mean_squared_error, mean_absolute_error, r2_score)
+import numpy as np
+
+# ========== 分类指标 ==========
+y_true = [1, 1, 0, 1, 0, 1, 0, 0, 1, 1]
+y_pred = [1, 0, 0, 1, 0, 1, 1, 0, 1, 0]
+
+print("准确率:", accuracy_score(y_true, y_pred))      # 0.7
+print("精确率:", precision_score(y_true, y_pred))     # 0.8
+print("召回率:", recall_score(y_true, y_pred))        # 0.67
+print("F1分数:", f1_score(y_true, y_pred))            # 0.73
+print("\n分类报告:")
+print(classification_report(y_true, y_pred))
+print("混淆矩阵:")
+print(confusion_matrix(y_true, y_pred))
+
+# ========== 回归指标 ==========
+y_true_reg = [3.0, -0.5, 2.0, 7.0]
+y_pred_reg = [2.5, 0.0, 2.1, 7.8]
+
+print("MSE:", mean_squared_error(y_true_reg, y_pred_reg))
+print("RMSE:", np.sqrt(mean_squared_error(y_true_reg, y_pred_reg)))
+print("MAE:", mean_absolute_error(y_true_reg, y_pred_reg))
+print("R²:", r2_score(y_true_reg, y_pred_reg))
+```
+
+## 适用场景
+
+- **类别均衡**：用准确率Accuracy即可
+- **类别不均衡**：用F1分数、AUC，不要只看准确率
+- **更关注漏检**（如癌症筛查）：重点看召回率Recall
+- **更关注误报**（如垃圾邮件过滤）：重点看精确率Precision
+- **回归问题**：看R²和RMSE，R²更直观，RMSE对异常值敏感
+
+## 常见易错点
+
+1. **类别不均衡时只看准确率**：99%负样本，全预测负也有99%准确率，但模型完全没用
+2. **混淆精确率和召回率**：精确率是"预测为正里有多少是对的"，召回率是"实际为正里找到了多少"
+3. **回归问题忽略量纲**：RMSE和MAE的值和数据量纲相关，不同数据集之间不能直接比较
+4. **多分类问题直接用二分类指标**：多分类需要用macro/weighted平均
+
+## 练习题
+
+1. **选择题**：在癌症筛查中，以下哪个指标最重要？（A）准确率 （B）精确率 （C）召回率 （D）F1
+   - 答案：C。癌症筛查最重要的是不漏检，即召回率要高。
+
+2. **填空题**：精确率的公式是____。
+   - 答案：Precision = TP / (TP + FP)
+
+3. **简答题**：为什么类别不均衡时不能只看准确率？请举例说明。
+   - 答案：假设100个样本中99个负样本1个正样本，模型全预测负，准确率99%，但完全没有识别正样本的能力，这个模型是无用的。
+
+4. **编程题**：给定一组真实标签和预测结果，计算准确率、精确率、召回率、F1分数，并打印分类报告。
+   - 参考上面的代码实现。
+
+## 推荐阅读
+
+- Scikit-learn评估指标文档：https://scikit-learn.org/stable/modules/model_evaluation.html
+- 吴恩达《机器学习》第6周
+- 西瓜书第2章

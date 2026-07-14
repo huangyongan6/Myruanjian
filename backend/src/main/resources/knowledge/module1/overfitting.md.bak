@@ -1,0 +1,94 @@
+# 过拟合与欠拟合
+
+## 概念介绍
+
+过拟合（Overfitting）和欠拟合（Underfitting）是模型在训练数据与新数据上表现不一致的两个核心问题。
+
+- **过拟合**：模型把训练数据的"细节 + 噪声"都学进去了，结果训练集分数很高但测试集很差。就像学生死记硬背了练习题答案，遇到新题完全不会。
+- **欠拟合**：模型太简单，连训练数据的基本规律都没学到，训练集和测试集都表现很差。就像学生上课没听讲，做练习题也错，做新题也错。
+
+调参的核心就是"在过拟合和欠拟合之间找平衡"。
+
+## 核心原理
+
+### 表现特征
+
+| 现象 | 训练误差 | 验证误差 | 性质 |
+|------|--------|---------|------|
+| 欠拟合 | 高 | 高 | 高偏差 |
+| 正常 | 低 | 低（与训练接近） | — |
+| 过拟合 | 很低 | 远高于训练 | 高方差 |
+
+### 根本原因
+
+- **欠拟合**：模型能力不足（特征不够 / 模型太简单 / 训练不充分）。
+- **过拟合**：训练数据相对模型过于复杂（特征过多 / 噪声被学 / 训练轮数过多）。
+
+### 解决方法
+
+| 对策 | 适用情况 | 具体做法 |
+|------|---------|---------|
+| 增加数据 | 过拟合 | 收集更多样本 / 数据增强 |
+| 特征选择 | 过拟合 | 减少特征数 / 用正则化筛选 |
+| 正则化 | 过拟合 | L1/L2 / Dropout（神经网络） |
+| 简化模型 | 过拟合 | 降低多项式次数 / 减少树深度 |
+| 增加特征 | 欠拟合 | 加新特征 / 特征交叉 |
+| 增加模型复杂度 | 欠拟合 | 用更复杂的模型 |
+| 早停（Early Stopping） | 过拟合 | 验证误差不再下降时停止 |
+| 集成学习 | 过拟合 | Bagging / Boosting |
+
+## 代码实现
+
+```python
+import numpy as np
+import matplotlib.pyplot as plt
+from sklearn.model_selection import train_test_split, validation_curve
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.datasets import load_iris
+
+X, y = load_iris(return_X_y=True)
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=42, stratify=y)
+
+# 用 validation_curve 观察 max_depth 的影响
+param_range = np.arange(1, 11)
+train_scores, val_scores = validation_curve(
+    DecisionTreeClassifier(random_state=42), X_train, y_train,
+    param_name='max_depth', param_range=param_range, cv=5, scoring='accuracy'
+)
+
+train_mean = train_scores.mean(axis=1)
+val_mean = val_scores.mean(axis=1)
+
+print(f"{'max_depth':>10} {'训练准确率':>12} {'验证准确率':>12}")
+for d, t, v in zip(param_range, train_mean, val_mean):
+    print(f"{d:>10d} {t:>12.4f} {v:>12.4f}")
+```
+
+## 适用场景
+
+- 任何监督学习任务都需要诊断与处理过拟合/欠拟合
+- 模型选择与超参数调优（学习曲线是必备工具）
+
+## 常见易错点
+
+1. **不看学习曲线就调参**：先画学习曲线判断是过拟合还是欠拟合，再对症下药。
+2. **过拟合一味加数据**：数据有限时，加正则化比加数据更现实。
+3. **欠拟合不分青红皂白加模型**：可能是特征质量差，盲目加深网络没用。
+4. **依赖单一指标**：同时看训练和验证误差的差距才能定位问题。
+
+## 练习题
+
+1. **选择题**：训练准确率 99%，测试准确率 70%，最可能的原因是？（A）欠拟合 （B）过拟合 （C）数据量太少 （D）特征数太少
+   - 答案：B
+
+2. **填空题**：判断过拟合的依据是____远大于____。
+   - 答案：验证误差；训练误差。
+
+3. **简答题**：请分别说出三种解决过拟合的方法和三种解决欠拟合的方法。
+   - 答案：过拟合：增加训练数据、特征选择、正则化（L1/L2）、Dropout、早停、集成学习。欠拟合：增加特征、增加模型复杂度、减少正则化、训练更多轮。
+
+## 推荐阅读
+
+- 周志华《机器学习》（西瓜书）第2章
+- Andrew Ng《机器学习》课程第10-11周
+- Scikit-learn 验证曲线文档：https://scikit-learn.org/stable/modules/learning_curve.html

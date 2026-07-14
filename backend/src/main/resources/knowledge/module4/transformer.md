@@ -1,0 +1,264 @@
+# Transformer基础
+
+## 概念介绍
+
+Transformer 是2017年 Google 提出的革命性架构，彻底改变了自然语言处理领域。它抛弃了RNN的循环结构，完全基于**注意力机制（Attention）**，可以并行处理整个序列，训练速度大幅提升。GPT、BERT、ChatGPT 等大模型的核心都是 Transformer。
+
+Transformer 的核心创新是**自注意力机制（Self-Attention）**，它让序列中的每个位置都能直接"关注"其他所有位置，解决了 RNN 长距离依赖的问题。
+
+## 核心原理
+
+### Self-Attention（自注意力）
+
+每个输入向量生成三个向量：Query(Q)、Key(K)、Value(V)
+
+```
+Attention(Q, K, V) = softmax(QKᵀ / √dₖ) * V
+```
+
+直觉理解：
+- Q 是"我在找什么"
+- K 是"我有什么信息"
+- V 是"我的实际内容"
+- QKᵀ 计算每对元素的相关性，softmax 归一化为注意力权重
+- 用权重对 V 加权求和，得到融合了全局信息的输出
+
+### Multi-Head Attention
+
+多个注意力头并行计算，每个头关注不同的模式：
+
+```
+MultiHead = Concat(head₁, ..., headₕ) * W_O
+headᵢ = Attention(QW_i^Q, KW_i^K, VW_i^V)
+```
+
+### Transformer 编码器结构
+
+```
+输入 → 位置编码 → [Multi-Head Attention → Add&Norm → FFN → Add&Norm] × N → 输出
+```
+
+- **位置编码**：给输入加上位置信息（Attention 本身没有位置概念）
+- **Add&Norm**：残差连接 + 层归一化，稳定训练
+- **FFN**：前馈网络，两层全连接 + ReLU
+
+## 代码实现
+
+```python
+import torch
+import torch.nn as nn
+import math
+
+class SimpleTransformer(nn.Module):
+    def __init__(self, vocab_size, d_model=128, nhead=4, num_layers=2, num_classes=2):
+        super().__init__()
+        self.embedding = nn.Embedding(vocab_size, d_model)
+        self.pos_encoding = PositionalEncoding(d_model)
+
+        encoder_layer = nn.TransformerEncoderLayer(
+            d_model=d_model,
+            nhead=nhead,
+            dim_feedforward=256,
+            dropout=0.1,
+            batch_first=True
+        )
+        self.transformer = nn.TransformerEncoder(encoder_layer, num_layers=num_layers)
+        self.classifier = nn.Linear(d_model, num_classes)
+
+    def forward(self, x):
+        # x: (batch, seq_len)
+        x = self.embedding(x)           # (batch, seq_len, d_model)
+        x = self.pos_encoding(x)        # 加位置编码
+        x = self.transformer(x)         # (batch, seq_len, d_model)
+        x = x.mean(dim=1)               # 全局平均池化 (batch, d_model)
+        return self.classifier(x)        # (batch, num_classes)
+
+class PositionalEncoding(nn.Module):
+    def __init__(self, d_model, max_len=5000):
+        super().__init__()
+        pe = torch.zeros(max_len, d_model)
+        position = torch.arange(0, max_len, dtype=torch.float).unsqueeze(1)
+        div_term = torch.exp(torch.arange(0, d_model, 2).float() * (-math.log(10000.0) / d_model))
+        pe[:, 0::2] = torch.sin(position * div_term)
+        pe[:, 1::2] = torch.cos(position * div_term)
+        self.register_buffer('pe', pe.unsqueeze(0))
+
+    def forward(self, x):
+        return x + self.pe[:, :x.size(1)]
+
+# 使用示例
+model = SimpleTransformer(vocab_size=10000, d_model=128, nhead=4, num_layers=2, num_classes=2)
+x = torch.randint(0, 10000, (32, 50))  # batch=32, seq_len=50
+output = model(x)
+print(f"输出形状: {output.shape}")  # (32, 2)
+print(f"模型参数量: {sum(p.numel() for p in model.parameters()):,}")
+```
+
+## 适用场景
+
+- 自然语言处理（文本分类、翻译、问答、摘要）
+- 大语言模型（GPT、BERT、LLaMA的核心架构）
+- 多模态模型（Vision Transformer 处理图像）
+- 语音处理
+
+## 常见易错点
+
+1. **不加位置编码**：Transformer 没有位置感知能力，必须加位置编码
+2. **不理解 Attention 的计算**：QKᵀ 计算的是"谁和谁相关"，softmax 后是权重
+3. **忽略残差连接**：残差连接对深层 Transformer 的训练至关重要
+4. **显存不足**：Attention 的计算量是 O(n²)，序列很长时显存消耗大
+
+## 练习题
+
+1. **选择题**：Transformer 相比 RNN 的最大优势是什么？（A）参数更少 （B）可以并行计算 （C）不需要数据 （D）不需要GPU
+   - 答案：B
+
+2. **填空题**：Self-Attention 的计算公式是 Attention(Q,K,V) = ____。
+   - 答案：softmax(QKᵀ/√dₖ) * V
+
+3. **简答题**：为什么 Transformer 需要位置编码？
+   - 答案：Self-Attention 的计算是集合操作，对输入顺序不敏感（打乱顺序结果一样）。位置编码给每个位置加上唯一标识，让模型知道词语的先后顺序。
+
+4. **编程题**：用 TransformerEncoder 做一个简单的文本分类任务。
+   - 参考上面代码。
+
+## 推荐阅读
+
+- 原始论文《Attention Is All You Need》
+- Jay Alammar 的《The Illustrated Transformer》
+- Harvard 的《The Annotated Transformer》
+
+<!-- ============================================ -->
+<!-- 以下内容由 scripts/sync-knowledge.py 同步自顶层原稿 knowledge/ -->
+<!-- 仅供阅读参考；正文以本文件原有章节为准，重复段落由维护者清理。 -->
+<!-- ============================================ -->
+
+# Transformer基础
+
+## 概念介绍
+
+Transformer是2017年Google提出的革命性架构，彻底改变了自然语言处理领域。它抛弃了RNN的循环结构，完全基于**注意力机制（Attention）**，可以并行处理整个序列，训练速度大幅提升。GPT、BERT、ChatGPT等大模型的核心都是Transformer。
+
+Transformer的核心创新是**自注意力机制（Self-Attention）**，它让序列中的每个位置都能直接"关注"其他所有位置，解决了RNN长距离依赖的问题。
+
+## 核心原理
+
+### Self-Attention（自注意力）
+
+每个输入向量生成三个向量：Query(Q)、Key(K)、Value(V)
+
+```
+Attention(Q, K, V) = softmax(QKᵀ / √dₖ) * V
+```
+
+直觉理解：
+- Q是"我在找什么"
+- K是"我有什么信息"
+- V是"我的实际内容"
+- QKᵀ计算每对元素的相关性，softmax归一化为注意力权重
+- 用权重对V加权求和，得到融合了全局信息的输出
+
+### Multi-Head Attention
+
+多个注意力头并行计算，每个头关注不同的模式：
+
+```
+MultiHead = Concat(head₁, ..., headₕ) * Wᴼ
+headᵢ = Attention(QWᵢQ, KWᵢK, VWᵢV)
+```
+
+### Transformer编码器结构
+
+```
+输入 → 位置编码 → [Multi-Head Attention → Add&Norm → FFN → Add&Norm] × N → 输出
+```
+
+- **位置编码**：给输入加上位置信息（Attention本身没有位置概念）
+- **Add&Norm**：残差连接+层归一化，稳定训练
+- **FFN**：前馈网络，两层全连接+ReLU
+
+## 代码实现
+
+```python
+import torch
+import torch.nn as nn
+import math
+
+class SimpleTransformer(nn.Module):
+    def __init__(self, vocab_size, d_model=128, nhead=4, num_layers=2, num_classes=2):
+        super().__init__()
+        self.embedding = nn.Embedding(vocab_size, d_model)
+        self.pos_encoding = PositionalEncoding(d_model)
+
+        encoder_layer = nn.TransformerEncoderLayer(
+            d_model=d_model,
+            nhead=nhead,
+            dim_feedforward=256,
+            dropout=0.1,
+            batch_first=True
+        )
+        self.transformer = nn.TransformerEncoder(encoder_layer, num_layers=num_layers)
+        self.classifier = nn.Linear(d_model, num_classes)
+
+    def forward(self, x):
+        # x: (batch, seq_len)
+        x = self.embedding(x)           # (batch, seq_len, d_model)
+        x = self.pos_encoding(x)        # 加位置编码
+        x = self.transformer(x)         # (batch, seq_len, d_model)
+        x = x.mean(dim=1)               # 全局平均池化 (batch, d_model)
+        return self.classifier(x)        # (batch, num_classes)
+
+class PositionalEncoding(nn.Module):
+    def __init__(self, d_model, max_len=5000):
+        super().__init__()
+        pe = torch.zeros(max_len, d_model)
+        position = torch.arange(0, max_len, dtype=torch.float).unsqueeze(1)
+        div_term = torch.exp(torch.arange(0, d_model, 2).float() * (-math.log(10000.0) / d_model))
+        pe[:, 0::2] = torch.sin(position * div_term)
+        pe[:, 1::2] = torch.cos(position * div_term)
+        self.register_buffer('pe', pe.unsqueeze(0))
+
+    def forward(self, x):
+        return x + self.pe[:, :x.size(1)]
+
+# 使用示例
+model = SimpleTransformer(vocab_size=10000, d_model=128, nhead=4, num_layers=2, num_classes=2)
+x = torch.randint(0, 10000, (32, 50))  # batch=32, seq_len=50
+output = model(x)
+print(f"输出形状: {output.shape}")  # (32, 2)
+print(f"模型参数量: {sum(p.numel() for p in model.parameters()):,}")
+```
+
+## 适用场景
+
+- 自然语言处理（文本分类、翻译、问答、摘要）
+- 大语言模型（GPT、BERT、LLaMA的核心架构）
+- 多模态模型（Vision Transformer处理图像）
+- 语音处理
+
+## 常见易错点
+
+1. **不加位置编码**：Transformer没有位置感知能力，必须加位置编码
+2. **不理解Attention的计算**：QKᵀ计算的是"谁和谁相关"，softmax后是权重
+3. **忽略残差连接**：残差连接对深层Transformer的训练至关重要
+4. **显存不足**：Attention的计算量是O(n²)，序列很长时显存消耗大
+
+## 练习题
+
+1. **选择题**：Transformer相比RNN的最大优势是什么？（A）参数更少 （B）可以并行计算 （C）不需要数据 （D）不需要GPU
+   - 答案：B
+
+2. **填空题**：Self-Attention的计算公式是 Attention(Q,K,V) = ____。
+   - 答案：softmax(QKᵀ/√dₖ) * V
+
+3. **简答题**：为什么Transformer需要位置编码？
+   - 答案：Self-Attention的计算是集合操作，对输入顺序不敏感（打乱顺序结果一样）。位置编码给每个位置加上唯一标识，让模型知道词语的先后顺序。
+
+4. **编程题**：用TransformerEncoder做一个简单的文本分类任务。
+   - 参考上面代码。
+
+## 推荐阅读
+
+- 原始论文《Attention Is All You Need》
+- Jay Alammar的《The Illustrated Transformer》
+- Harvard的《The Annotated Transformer》

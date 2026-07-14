@@ -1,0 +1,29 @@
+# Docker 构建排除项（CLAUDE.md §12 / §16）
+
+# 构建产物
+target/
+
+# Git
+.git/
+.gitignore
+
+# IDE
+.idea/
+.vscode/
+*.iml
+*.iws
+*.ipr
+
+# 系统文件
+.DS_Store
+Thumbs.db
+
+# 日志与文档
+*.log
+logs/
+README.md
+
+# 本地环境配置（敏感信息）
+src/main/resources/application-local.yml
+.env
+.env.local

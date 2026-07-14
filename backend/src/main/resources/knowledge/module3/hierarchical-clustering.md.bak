@@ -1,0 +1,84 @@
+# 层次聚类
+
+## 概念介绍
+
+层次聚类（Hierarchical Clustering）是一种不需要预先指定K值的聚类算法。它通过逐步合并或拆分簇来构建一棵"聚类树"（树状图），你可以根据树状图的结构来决定最终分成几组。
+
+层次聚类分为两种：**凝聚式**（自底向上，每步合并最近的两个簇）和**分裂式**（自顶向下，每步拆分一个簇）。实际中凝聚式更常用。
+
+## 核心原理
+
+### 凝聚式层次聚类步骤
+
+1. 把每个样本看作一个簇（共N个簇）
+2. 找到距离最近的两个簇，合并为一个新簇
+3. 重新计算簇之间的距离
+4. 重复步骤2-3，直到所有样本合并为一个簇
+
+### 簇间距离度量
+
+- **单链接（Single Linkage）**：两个簇中最近的两个点的距离
+- **全链接（Complete Linkage）**：两个簇中最远的两个点的距离
+- **平均链接（Average Linkage）**：两个簇中所有点对的平均距离
+- **Ward方法**：合并后簇内方差增量最小（最常用）
+
+## 代码实现
+
+```python
+from sklearn.cluster import AgglomerativeClustering
+from sklearn.datasets import make_blobs
+from sklearn.metrics import silhouette_score
+from sklearn.preprocessing import StandardScaler
+import matplotlib.pyplot as plt
+import numpy as np
+from scipy.cluster.hierarchy import dendrogram, linkage
+
+# 生成数据
+X, y = make_blobs(n_samples=150, centers=4, cluster_std=0.8, random_state=42)
+X_scaled = StandardScaler().fit_transform(X)
+
+# 训练层次聚类
+model = AgglomerativeClustering(n_clusters=4, linkage='ward')
+labels = model.fit_predict(X_scaled)
+
+print(f"轮廓系数: {silhouette_score(X_scaled, labels):.4f}")
+
+# 画树状图
+plt.figure(figsize=(12, 5))
+Z = linkage(X_scaled, method='ward')
+dendrogram(Z, truncate_mode='lastp', p=30, leaf_font_size=10)
+plt.title('层次聚类树状图')
+plt.xlabel('样本')
+plt.ylabel('距离')
+plt.savefig("dendrogram.png", dpi=100)
+plt.show()
+```
+
+## 适用场景
+
+- 不知道该分几组的探索性分析
+- 需要可视化聚类层次结构的场景
+- 小规模数据（<10000样本）
+- 基因表达数据分析、生物分类学
+
+## 常见易错点
+
+1. **大数据集用层次聚类**：时间复杂度 O(n³)、空间 O(n²)，数据量大时很慢
+2. **不看树状图就定K**：树状图可以帮助直观选择K值
+3. **链接方式不调优**：不同链接方式结果差异很大，需要尝试
+
+## 练习题
+
+1. **选择题**：凝聚式层次聚类的步骤是？（A）自顶向下拆分 （B）自底向上合并 （C）随机分配 （D）投票决定
+   - 答案：B
+
+2. **简答题**：层次聚类和K-Means的主要区别是什么？
+   - 答案：层次聚类不需要预设K值，可以生成树状图直观选择；K-Means需要预设K但速度快。层次聚类适合小数据探索，K-Means适合大数据。
+
+3. **编程题**：对鸢尾花数据做层次聚类，画出树状图，观察是否能自然分出3类。
+   - 参考上面代码。
+
+## 推荐阅读
+
+- 西瓜书第9章
+- Scikit-learn聚类文档：https://scikit-learn.org/stable/modules/clustering.html

@@ -1,0 +1,165 @@
+# =====================================================================
+# 机器学习领域词典 / 停用词 / 同义词表
+# 对应 doc/05-机器学习知识库规划.md
+#
+# 维护规则：
+#   1. words：双向最大匹配词典；越长越优先匹配，故无需按长度排序
+#   2. stopwords：分词后过滤；放过短停用词避免破坏"线性回归"等专名
+#   3. synonyms：每组第一个词视为"主名"，其余视为别名；
+#      任意别名查询都会扩展到全部同义词
+# =====================================================================
+
+# 双向最大匹配词典
+words:
+  - 线性回归
+  - 逻辑回归
+  - 朴素贝叶斯
+  - 决策树
+  - 随机森林
+  - 支持向量机
+  - 集成学习
+  - K-Means
+  - 层次聚类
+  - 主成分分析
+  - 神经网络基础
+  - 神经网络
+  - 房价预测
+  - 手写数字识别
+  - 客户分群
+  - 情感分析
+  - 数据集划分
+  - 梯度下降
+  - 最小二乘法
+  - 信息增益
+  - 基尼系数
+  - 交叉熵
+  - 反向传播
+  - 自注意力
+  - 位置编码
+  - 激活函数
+  - 特征工程
+  - 数据清洗
+  - 贝叶斯定理
+  - 距离度量
+  - 树状图
+  - 降维可视化
+  - 模型评估指标
+  - 偏差与方差
+  - 过拟合与欠拟合
+  - 无监督学习
+  - 监督学习
+  - Scikit-learn
+  - GridSearchCV
+  - DataLoader
+  - Tensor
+  - Pipeline
+  - Sigmoid
+  - ReLU
+  - Transformer
+  - XGBoost
+  - PyTorch
+  - LSTM
+  - UMAP
+  - t-SNE
+  - CNN
+  - RNN
+  - KNN
+  - SVM
+  - PCA
+  - Bagging
+  - Boosting
+  - NumPy
+  - Pandas
+  - 感知机
+  - 卷积
+  - 池化
+  - 凝聚
+  - 分裂
+  - 核函数
+  - 软间隔
+  - 肘部法则
+  - 方差解释率
+  - 词嵌入
+  - 标注数据
+  - 无标注数据
+  - 训练集
+  - 验证集
+  - 测试集
+  - 准确率
+  - 精确率
+  - 召回率
+  - 过拟合
+  - 欠拟合
+  - 偏差
+  - 方差
+  - 分类
+  - 回归
+  - 聚类
+  - 降维
+  - 反传
+
+# 停用词（分词后过滤；放过短避免破坏"线性回归"等专名）
+stopwords:
+  - 的
+  - 是
+  - 在
+  - 了
+  - 和
+  - 与
+  - 或
+  - 一个
+  - 一些
+  - 怎么
+  - 如何
+  - 什么
+  - 为什么
+  - 请问
+  - 请
+  - 帮我
+  - 想
+  - 讲讲
+  - 解释
+  - 一下
+  - 那
+  - 这
+  - 那个
+  - 这个
+  - 能
+  - 可以
+  - 是否
+  - 哪些
+  - 哪个
+  - 怎么理解
+  - 是什么意思
+
+# 同义词组（双向等价）
+synonyms:
+  - [逻辑回归, logistic, logistic回归, 逻辑斯谛回归]
+  - [线性回归, linear, linear regression, least squares, 最小二乘, 线性模型]
+  - [支持向量机, SVM, svm]
+  - [主成分分析, PCA, pca, 降维]
+  - [朴素贝叶斯, naive bayes, 贝叶斯分类器]
+  - [梯度下降, gradient descent, gd]
+  - [反向传播, backpropagation, bp, 反传]
+  - [过拟合, overfit, overfitting, 泛化误差高]
+  - [欠拟合, underfit, underfitting, 欠训练]
+  - [感知机, perceptron]
+  - [自注意力, self-attention]
+  - [集成学习, ensemble, 集成方法]
+  - [距离度量, 距离, 欧氏距离, 余弦距离]
+  - [交叉熵, cross entropy, 对数损失]
+  - [基尼系数, gini]
+  - [信息增益, information gain]
+  - [卷积, convolution]
+  - [池化, pooling]
+  - [激活函数, activation]
+  - [训练集, training set]
+  - [测试集, test set]
+  - [验证集, validation set, dev set]
+  - [房价预测, house price]
+  - [手写数字识别, mnist, MNIST]
+  - [情感分析, sentiment, nlp分类]
+  - [Bagging, bagging, 自举汇聚]
+  - [Boosting, boosting, 提升法]
+  - [过拟合与欠拟合, 过拟合欠拟合, bias variance]
+  - [神经网络基础, 神经网络, neural network]

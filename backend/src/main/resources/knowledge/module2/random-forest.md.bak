@@ -1,0 +1,102 @@
+# 随机森林
+
+## 概念介绍
+
+随机森林（Random Forest）是一种基于"群体智慧"的集成算法，它同时训练多棵决策树，然后投票决定最终结果。就像让100个专家各自独立判断，最后取多数人的意见。单棵决策树容易过拟合，但把很多棵不同的树组合起来，就能大幅降低过拟合风险，提高预测准确性。
+
+随机森林是工业界最常用的算法之一，在 Kaggle 竞赛和实际项目中表现出色，通常不需要太多调参就能获得不错的效果，是"懒人首选"算法。
+
+## 核心原理
+
+### 两个"随机"
+
+**1. 样本随机（Bagging）**：每棵树用有放回抽样（Bootstrap）从原始数据中随机抽取一个子集来训练，大约 63.2% 的样本会被抽到。
+
+**2. 特征随机**：每个节点分裂时，不是从所有特征中选最优，而是随机选择 √p 个特征（p 是总特征数），再从中选最优。
+
+这两个随机使得每棵树都不一样，减少了树之间的相关性，集成效果更好。
+
+### 预测方式
+
+- **分类**：所有树投票，票数最多的类别为最终结果。
+- **回归**：所有树的预测值取平均。
+
+### 关键参数
+
+- **n_estimators**：树的数量，越多越好但计算量增大，通常 100-500。
+- **max_depth**：每棵树的最大深度。
+- **max_features**：每个节点随机选择的特征数。
+- **min_samples_split**：内部节点最少样本数。
+
+## 代码实现
+
+```python
+from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor
+from sklearn.datasets import load_iris
+from sklearn.model_selection import train_test_split, cross_val_score
+from sklearn.metrics import accuracy_score
+import numpy as np
+
+# ========== 分类示例 ==========
+X, y = load_iris(return_X_y=True)
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+model = RandomForestClassifier(
+    n_estimators=100,    # 100棵树
+    max_depth=5,         # 每棵树最大深度 5
+    max_features='sqrt', # 每个节点随机选 √p 个特征
+    random_state=42,
+    n_jobs=-1            # 使用所有 CPU 核心
+)
+model.fit(X_train, y_train)
+y_pred = model.predict(X_test)
+
+print(f"准确率: {accuracy_score(y_test, y_pred):.4f}")
+print(f"5折交叉验证: {cross_val_score(model, X, y, cv=5).mean():.4f}")
+
+# 特征重要性
+data = load_iris()
+print("\n特征重要性:")
+for name, imp in sorted(zip(data.feature_names, model.feature_importances_),
+                        key=lambda x: x[1], reverse=True):
+    print(f"  {name}: {imp:.4f}")
+
+# ========== OOB 评估（不需要单独划分验证集） ==========
+model_oob = RandomForestClassifier(n_estimators=100, oob_score=True, random_state=42)
+model_oob.fit(X, y)
+print(f"\nOOB 分数: {model_oob.oob_score_:.4f}")
+```
+
+## 适用场景
+
+- 几乎所有表格数据问题都可以先试随机森林
+- 不想花太多时间调参的场景
+- 需要特征重要性分析的场景
+- 数据有噪声的场景（随机森林对噪声鲁棒）
+- Kaggle 竞赛的常用基线模型
+
+## 常见易错点
+
+1. **树太少**：n_estimators 太小导致集成效果不够，至少 100。
+2. **树太深不限制**：虽然随机森林抗过拟合，但树太深还是会过拟合。
+3. **忽略 OOB 评估**：开启 oob_score=True 可以不划分验证集就评估模型。
+4. **把特征重要性当因果**：特征重要性高不代表因果关系，只是相关。
+
+## 练习题
+
+1. **选择题**：随机森林中"随机"体现在哪些方面？（A）样本随机 （B）特征随机 （C）两者都有 （D）参数随机
+   - 答案：C
+
+2. **填空题**：随机森林用于分类时，最终预测方式是____。
+   - 答案：投票（多数表决）。
+
+3. **简答题**：随机森林为什么比单棵决策树效果好？
+   - 答案：通过 Bagging 和特征随机，每棵树都不一样，减少了方差；多棵树投票/平均可以降低过拟合风险。
+
+4. **编程题**：用随机森林和单棵决策树分别在同一个数据集上对比，观察哪个效果更好。
+
+## 推荐阅读
+
+- Leo Breiman 的原始论文《Random Forests》
+- 西瓜书第8章
+- Scikit-learn 随机森林文档：https://scikit-learn.org/stable/modules/ensemble.html

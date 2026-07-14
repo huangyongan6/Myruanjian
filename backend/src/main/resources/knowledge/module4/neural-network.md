@@ -1,0 +1,298 @@
+# 神经网络基础
+
+## 概念介绍
+
+神经网络（Neural Network）是一种受人脑神经元启发的计算模型。它由大量互相连接的"神经元"组成，通过调整连接权重来学习数据中的复杂模式。神经网络是深度学习的基础，从简单的感知机到复杂的Transformer，底层逻辑都是神经网络。
+
+神经网络的强大之处在于：理论上只要有足够多的神经元和数据，它可以逼近任意复杂的函数。这使得它在图像识别、语音识别、自然语言处理等领域远超传统算法。
+
+## 核心原理
+
+### 感知机（单个神经元）
+
+最简单的神经网络，只有一个神经元：
+
+```
+输出 = f(w₁x₁ + w₂x₂ + ... + wₙxₙ + b) = f(wᵀx + b)
+```
+
+其中f是激活函数。感知机只能解决线性可分问题（如AND、OR），无法解决非线性问题（如XOR）。
+
+### 多层感知机（MLP）
+
+把多层神经元堆叠起来：
+
+```
+输入层 → 隐藏层1 → 隐藏层2 → ... → 输出层
+```
+
+每层的神经元与下一层全连接（全连接层）。隐藏层的引入使得网络可以学习非线性特征。
+
+### 激活函数
+
+没有激活函数，多层网络等价于单层线性变换。激活函数引入非线性：
+
+**Sigmoid**：σ(x) = 1/(1+e⁻ˣ)，输出 (0,1)，常用于二分类输出层。
+**Tanh**：tanh(x) = (eˣ - e⁻ˣ) / (eˣ + e⁻ˣ)，输出 (-1, 1)。
+**ReLU**：f(x) = max(0, x)，最常用，计算简单，缓解梯度消失。
+**Leaky ReLU**：f(x) = max(0.01x, x)，解决ReLU的"死亡神经元"问题。
+
+### 反向传播（Backpropagation）
+
+训练神经网络的核心算法：
+
+1. **前向传播**：输入数据逐层计算得到输出
+2. **计算损失**：输出与真实值比较，算出误差
+3. **反向传播**：用链式法则从后往前计算每个权重的梯度
+4. **更新权重**：w := w - α * ∂L/∂w
+
+## 代码实现
+
+```python
+import torch
+import torch.nn as nn
+import torch.optim as optim
+from sklearn.datasets import load_iris
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler
+import numpy as np
+
+# 加载数据
+X, y = load_iris(return_X_y=True)
+X = StandardScaler().fit_transform(X)
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+# 转为 PyTorch 张量
+X_train_t = torch.FloatTensor(X_train)
+y_train_t = torch.LongTensor(y_train)
+X_test_t = torch.FloatTensor(X_test)
+y_test_t = torch.LongTensor(y_test)
+
+# 定义神经网络
+class SimpleNN(nn.Module):
+    def __init__(self):
+        super().__init__()
+        self.net = nn.Sequential(
+            nn.Linear(4, 16),      # 输入层→隐藏层1
+            nn.ReLU(),             # 激活函数
+            nn.Linear(16, 8),      # 隐藏层1→隐藏层2
+            nn.ReLU(),             # 激活函数
+            nn.Linear(8, 3)        # 隐藏层2→输出层（3类）
+        )
+
+    def forward(self, x):
+        return self.net(x)
+
+# 训练
+model = SimpleNN()
+criterion = nn.CrossEntropyLoss()
+optimizer = optim.Adam(model.parameters(), lr=0.01)
+
+for epoch in range(100):
+    # 前向传播
+    outputs = model(X_train_t)
+    loss = criterion(outputs, y_train_t)
+
+    # 反向传播
+    optimizer.zero_grad()
+    loss.backward()
+    optimizer.step()
+
+    if (epoch + 1) % 20 == 0:
+        _, predicted = torch.max(outputs, 1)
+        acc = (predicted == y_train_t).float().mean()
+        print(f"Epoch {epoch+1}, Loss: {loss.item():.4f}, Accuracy: {acc:.4f}")
+
+# 评估
+with torch.no_grad():
+    outputs = model(X_test_t)
+    _, predicted = torch.max(outputs, 1)
+    acc = (predicted == y_test_t).float().mean()
+    print(f"\n测试集准确率: {acc:.4f}")
+```
+
+## 适用场景
+
+- 数据量大（万级以上）
+- 复杂模式识别（图像、语音、文本）
+- 传统算法效果不够好的场景
+- 特征工程困难的场景（深度学习可以自动学习特征）
+
+## 常见易错点
+
+1. **数据量不够就用深度学习**：数据量小会严重过拟合
+2. **不调学习率**：学习率是最关键的超参数
+3. **忘记激活函数**：没有激活函数多层网络等价于单层
+4. **梯度消失/爆炸**：Sigmoid/Tanh 容易导致梯度消失，深层网络用 ReLU
+
+## 练习题
+
+1. **选择题**：以下哪个激活函数最常用于隐藏层？（A）Sigmoid （B）Tanh （C）ReLU （D）Linear
+   - 答案：C
+
+2. **填空题**：训练神经网络的核心算法是____。
+   - 答案：反向传播（Backpropagation）
+
+3. **简答题**：为什么神经网络需要激活函数？
+   - 答案：没有激活函数，多层线性变换等价于单层线性变换，无法学习非线性关系。激活函数引入非线性，使网络可以逼近任意复杂函数。
+
+4. **编程题**：用PyTorch搭建一个3层MLP对手写数字（load_digits）做分类。
+   - 参考上面代码。
+
+## 推荐阅读
+
+- 吴恩达《深度学习》课程第1周
+- 《深度学习》（花书）第6章
+- PyTorch官方教程：https://pytorch.org/tutorials/
+
+<!-- ============================================ -->
+<!-- 以下内容由 scripts/sync-knowledge.py 同步自顶层原稿 knowledge/ -->
+<!-- 仅供阅读参考；正文以本文件原有章节为准，重复段落由维护者清理。 -->
+<!-- ============================================ -->
+
+# 神经网络基础
+
+## 概念介绍
+
+神经网络（Neural Network）是一种受人脑神经元启发的计算模型。它由大量互相连接的"神经元"组成，通过调整连接权重来学习数据中的复杂模式。神经网络是深度学习的基础，从简单的感知机到复杂的Transformer，底层逻辑都是神经网络。
+
+神经网络的强大之处在于：理论上只要有足够多的神经元和数据，它可以逼近任意复杂的函数。这使得它在图像识别、语音识别、自然语言处理等领域远超传统算法。
+
+## 核心原理
+
+### 感知机（单个神经元）
+
+最简单的神经网络，只有一个神经元：
+
+```
+输出 = f(w₁x₁ + w₂x₂ + ... + wₙxₙ + b) = f(wᵀx + b)
+```
+
+其中f是激活函数。感知机只能解决线性可分问题（如AND、OR），无法解决非线性问题（如XOR）。
+
+### 多层感知机（MLP）
+
+把多层神经元堆叠起来：
+
+```
+输入层 → 隐藏层1 → 隐藏层2 → ... → 输出层
+```
+
+每层的神经元与下一层全连接（全连接层）。隐藏层的引入使得网络可以学习非线性特征。
+
+### 激活函数
+
+没有激活函数，多层网络等价于单层线性变换。激活函数引入非线性：
+
+**Sigmoid**：σ(x) = 1/(1+e⁻ˣ)，输出(0,1)，常用于二分类输出层
+**Tanh**：tanh(x) = (eˣ-e⁻ˣ)/(eˣ+e⁻ˣ)，输出(-1,1)
+**ReLU**：f(x) = max(0,x)，最常用，计算简单，缓解梯度消失
+**Leaky ReLU**：f(x) = max(0.01x, x)，解决ReLU的"死亡神经元"问题
+
+### 反向传播（Backpropagation）
+
+训练神经网络的核心算法：
+
+1. **前向传播**：输入数据逐层计算得到输出
+2. **计算损失**：输出与真实值比较，算出误差
+3. **反向传播**：用链式法则从后往前计算每个权重的梯度
+4. **更新权重**：w := w - α * ∂L/∂w
+
+## 代码实现
+
+```python
+import torch
+import torch.nn as nn
+import torch.optim as optim
+from sklearn.datasets import load_iris
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler
+import numpy as np
+
+# 加载数据
+X, y = load_iris(return_X_y=True)
+X = StandardScaler().fit_transform(X)
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+# 转为PyTorch张量
+X_train_t = torch.FloatTensor(X_train)
+y_train_t = torch.LongTensor(y_train)
+X_test_t = torch.FloatTensor(X_test)
+y_test_t = torch.LongTensor(y_test)
+
+# 定义神经网络
+class SimpleNN(nn.Module):
+    def __init__(self):
+        super().__init__()
+        self.net = nn.Sequential(
+            nn.Linear(4, 16),      # 输入层→隐藏层1
+            nn.ReLU(),             # 激活函数
+            nn.Linear(16, 8),      # 隐藏层1→隐藏层2
+            nn.ReLU(),             # 激活函数
+            nn.Linear(8, 3)        # 隐藏层2→输出层（3类）
+        )
+
+    def forward(self, x):
+        return self.net(x)
+
+# 训练
+model = SimpleNN()
+criterion = nn.CrossEntropyLoss()
+optimizer = optim.Adam(model.parameters(), lr=0.01)
+
+for epoch in range(100):
+    # 前向传播
+    outputs = model(X_train_t)
+    loss = criterion(outputs, y_train_t)
+
+    # 反向传播
+    optimizer.zero_grad()
+    loss.backward()
+    optimizer.step()
+
+    if (epoch+1) % 20 == 0:
+        _, predicted = torch.max(outputs, 1)
+        acc = (predicted == y_train_t).float().mean()
+        print(f"Epoch {epoch+1}, Loss: {loss.item():.4f}, Accuracy: {acc:.4f}")
+
+# 评估
+with torch.no_grad():
+    outputs = model(X_test_t)
+    _, predicted = torch.max(outputs, 1)
+    acc = (predicted == y_test_t).float().mean()
+    print(f"\n测试集准确率: {acc:.4f}")
+```
+
+## 适用场景
+
+- 数据量大（万级以上）
+- 复杂模式识别（图像、语音、文本）
+- 传统算法效果不够好的场景
+- 特征工程困难的场景（深度学习可以自动学习特征）
+
+## 常见易错点
+
+1. **数据量不够就用深度学习**：数据量小会严重过拟合
+2. **不调学习率**：学习率是最关键的超参数
+3. **忘记激活函数**：没有激活函数多层网络等价于单层
+4. **梯度消失/爆炸**：Sigmoid/Tanh容易导致梯度消失，深层网络用ReLU
+
+## 练习题
+
+1. **选择题**：以下哪个激活函数最常用于隐藏层？（A）Sigmoid （B）Tanh （C）ReLU （D）Linear
+   - 答案：C
+
+2. **填空题**：训练神经网络的核心算法是____。
+   - 答案：反向传播（Backpropagation）
+
+3. **简答题**：为什么神经网络需要激活函数？
+   - 答案：没有激活函数，多层线性变换等价于单层线性变换，无法学习非线性关系。激活函数引入非线性，使网络可以逼近任意复杂函数。
+
+4. **编程题**：用PyTorch搭建一个3层MLP对手写数字（load_digits）做分类。
+   - 参考上面代码。
+
+## 推荐阅读
+
+- 吴恩达深度学习课程第1周
+- 《深度学习》（花书）第6章
+- PyTorch官方教程：https://pytorch.org/tutorials/

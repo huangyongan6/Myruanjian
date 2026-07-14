@@ -1,0 +1,251 @@
+# 文本情感分析（NLP项目）
+
+## 项目概述
+
+使用机器学习方法对文本进行情感分类（正面/负面），是自然语言处理的经典任务。本项目展示从传统机器学习（TF-IDF + 逻辑回归）到深度学习（LSTM）的完整NLP流程。
+
+## 完整代码
+
+```python
+import numpy as np
+import pandas as pd
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.linear_model import LogisticRegression
+from sklearn.naive_bayes import MultinomialNB
+from sklearn.svm import LinearSVC
+from sklearn.model_selection import train_test_split, cross_val_score
+from sklearn.metrics import classification_report, accuracy_score
+
+# ========== 1. 数据准备 ==========
+reviews = [
+    "这部电影太棒了，演员演技很好，剧情精彩",
+    "非常好看，强烈推荐，值得二刷",
+    "画面精美，音乐动听，故事感人",
+    "导演功力深厚，每一帧都是艺术",
+    "这是我今年看过最好的电影",
+    "演员表演自然，台词写得真好",
+    "感动到哭了，结局太完美了",
+    "节奏紧凑，全程无尿点，非常精彩",
+    "特效一流，场面宏大，震撼人心",
+    "剧本扎实，人物饱满，值得细细品味",
+    "太难看了，浪费时间和金钱",
+    "剧情无聊，演技尴尬，看了一半就想走",
+    "烂片一部，毫无新意",
+    "节奏拖沓，故事讲不清楚",
+    "特效五毛，剧情老套，不推荐",
+    "演员表情僵硬，台词生硬",
+    "逻辑混乱，结局莫名其妙",
+    "全程尴尬，如坐针毡",
+    "导演拍的是什么玩意儿",
+    "浪费了这么好的演员阵容，剧本太差"
+]
+labels = [1]*10 + [0]*10  # 1=正面, 0=负面
+
+def simple_tokenize(text):
+    """简单按字分词；实际项目建议用 jieba.cut"""
+    return ' '.join(list(text))
+
+texts = [simple_tokenize(r) for r in reviews]
+
+# ========== 2. TF-IDF 特征提取 ==========
+vectorizer = TfidfVectorizer(max_features=5000, ngram_range=(1, 2))
+X = vectorizer.fit_transform(texts)
+y = np.array(labels)
+
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=42)
+
+# ========== 3. 多模型对比 ==========
+models = {
+    'LogisticRegression': LogisticRegression(max_iter=1000),
+    'NaiveBayes':         MultinomialNB(alpha=1.0),
+    'LinearSVM':          LinearSVC(max_iter=1000),
+}
+
+for name, model in models.items():
+    scores = cross_val_score(model, X_train, y_train, cv=3, scoring='accuracy')
+    print(f"{name:20s} CV准确率: {scores.mean():.4f} ± {scores.std():.4f}")
+
+# ========== 4. 最佳模型评估 ==========
+best_model = LogisticRegression(max_iter=1000)
+best_model.fit(X_train, y_train)
+y_pred = best_model.predict(X_test)
+print(f"\n测试集准确率: {accuracy_score(y_test, y_pred):.4f}")
+print(classification_report(y_test, y_pred, target_names=['负面', '正面']))
+
+# ========== 5. 预测新文本 ==========
+def predict_sentiment(text, model, vectorizer):
+    tokens = simple_tokenize(text)
+    features = vectorizer.transform([tokens])
+    pred = model.predict(features)[0]
+    prob = model.predict_proba(features)[0] if hasattr(model, 'predict_proba') else None
+    label = '正面' if pred == 1 else '负面'
+    if prob is not None:
+        confidence = max(prob)
+        return f"{label}（置信度: {confidence:.2%}）"
+    return label
+
+test_texts = [
+    "这部电影真的太好看了",
+    "浪费时间，不推荐",
+    "剧情还可以，但演员演技需要提升",
+    "视觉效果震撼，值得去电影院看"
+]
+
+print("\n新文本情感预测:")
+for text in test_texts:
+    result = predict_sentiment(text, best_model, vectorizer)
+    print(f"  '{text}' → {result}")
+```
+
+## 关键知识点
+
+- 文本预处理和分词
+- TF-IDF 特征提取
+- 文本分类的多种方法（Logistic / NB / SVM）
+- 特征重要性分析（哪些词影响情感判断）
+
+## 学完应该掌握
+
+完整的 NLP 文本分类流程：文本预处理 → 特征提取 → 模型训练 → 预测 → 结果分析
+
+## 推荐阅读
+
+- 《统计学习方法》第4章朴素贝叶斯
+- Kaggle Learn《Intro to NLP》
+
+<!-- ============================================ -->
+<!-- 以下内容由 scripts/sync-knowledge.py 同步自顶层原稿 knowledge/ -->
+<!-- 仅供阅读参考；正文以本文件原有章节为准，重复段落由维护者清理。 -->
+<!-- ============================================ -->
+
+# 文本情感分析（NLP项目）
+
+## 项目概述
+
+使用机器学习和深度学习方法对文本进行情感分类（正面/负面），是自然语言处理的经典任务。本项目展示从传统机器学习（TF-IDF+逻辑回归）到深度学习（LSTM）的完整NLP流程。
+
+## 完整代码
+
+```python
+import numpy as np
+import pandas as pd
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.linear_model import LogisticRegression
+from sklearn.naive_bayes import MultinomialNB
+from sklearn.svm import LinearSVC
+from sklearn.model_selection import train_test_split, cross_val_score
+from sklearn.metrics import classification_report, accuracy_score
+import re
+
+# ========== 1. 数据准备 ==========
+# 模拟电影评论数据
+reviews = [
+    "这部电影太棒了，演员演技很好，剧情精彩",
+    "非常好看，强烈推荐，值得二刷",
+    "画面精美，音乐动听，故事感人",
+    "导演功力深厚，每一帧都是艺术",
+    "这是我今年看过最好的电影",
+    "演员表演自然，台词写得真好",
+    "感动到哭了，结局太完美了",
+    "节奏紧凑，全程无尿点，非常精彩",
+    "特效一流，场面宏大，震撼人心",
+    "剧本扎实，人物饱满，值得细细品味",
+    "太难看了，浪费时间和金钱",
+    "剧情无聊，演技尴尬，看了一半就想走",
+    "烂片一部，毫无新意",
+    "节奏拖沓，故事讲不清楚",
+    "特效五毛，剧情老套，不推荐",
+    "演员表情僵硬，台词生硬",
+    "逻辑混乱，结局莫名其妙",
+    "全程尴尬，如坐针毡",
+    "导演拍的是什么玩意儿",
+    "浪费了这么好的演员阵容，剧本太差"
+]
+
+# 1=正面, 0=负面
+labels = [1]*10 + [0]*10
+
+# 中文分词（简单实现，实际项目用jieba）
+def simple_tokenize(text):
+    # 简单按字分词（实际用jieba.cut）
+    return ' '.join(list(text))
+
+texts = [simple_tokenize(r) for r in reviews]
+
+# ========== 2. TF-IDF特征提取 ==========
+vectorizer = TfidfVectorizer(max_features=5000, ngram_range=(1, 2))
+X = vectorizer.fit_transform(texts)
+y = np.array(labels)
+
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=42)
+
+# ========== 3. 多模型对比 ==========
+models = {
+    'LogisticRegression': LogisticRegression(max_iter=1000),
+    'NaiveBayes': MultinomialNB(alpha=1.0),
+    'LinearSVM': LinearSVC(max_iter=1000),
+}
+
+for name, model in models.items():
+    scores = cross_val_score(model, X_train, y_train, cv=3, scoring='accuracy')
+    print(f"{name:20s} CV准确率: {scores.mean():.4f} ± {scores.std():.4f}")
+
+# ========== 4. 最佳模型评估 ==========
+best_model = LogisticRegression(max_iter=1000)
+best_model.fit(X_train, y_train)
+y_pred = best_model.predict(X_test)
+print(f"\n测试集准确率: {accuracy_score(y_test, y_pred):.4f}")
+print(classification_report(y_test, y_pred, target_names=['负面', '正面']))
+
+# ========== 5. 预测新文本 ==========
+def predict_sentiment(text, model, vectorizer):
+    tokens = simple_tokenize(text)
+    features = vectorizer.transform([tokens])
+    pred = model.predict(features)[0]
+    prob = model.predict_proba(features)[0] if hasattr(model, 'predict_proba') else None
+    label = '正面' if pred == 1 else '负面'
+    if prob is not None:
+        confidence = max(prob)
+        return f"{label} (置信度: {confidence:.2%})"
+    return label
+
+test_texts = [
+    "这部电影真的太好看了",
+    "浪费时间，不推荐",
+    "剧情还可以，但演员演技需要提升",
+    "视觉效果震撼，值得去电影院看"
+]
+
+print("\n新文本情感预测:")
+for text in test_texts:
+    result = predict_sentiment(text, best_model, vectorizer)
+    print(f"  '{text}' → {result}")
+
+# ========== 6. 特征重要性分析 ==========
+feature_names = vectorizer.get_feature_names_out()
+coefs = best_model.coef_[0]
+
+# 正面情感关键词
+top_positive = sorted(zip(feature_names, coefs), key=lambda x: x[1], reverse=True)[:10]
+# 负面情感关键词
+top_negative = sorted(zip(feature_names, coefs), key=lambda x: x[1])[:10]
+
+print("\n正面情感关键词:")
+for word, score in top_positive:
+    print(f"  {word}: {score:.4f}")
+
+print("\n负面情感关键词:")
+for word, score in top_negative:
+    print(f"  {word}: {score:.4f}")
+```
+
+## 关键知识点
+
+- 文本预处理和分词
+- TF-IDF特征提取
+- 文本分类的多种方法
+- 特征重要性分析（哪些词影响情感判断）
+
+## 学完应该掌握
+
+完整的NLP文本分类流程：文本预处理→特征提取→模型训练→预测→结果分析

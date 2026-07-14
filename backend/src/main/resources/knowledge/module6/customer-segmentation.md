@@ -1,0 +1,229 @@
+# 客户分群（聚类项目）
+
+## 项目概述
+
+使用 K-Means 聚类算法对商场客户进行分群，是无监督学习的经典商业应用。通过客户的消费金额、消费频率、年龄等特征，将客户分成不同群体，帮助企业制定精准营销策略。
+
+## 完整代码
+
+```python
+import numpy as np
+import pandas as pd
+from sklearn.cluster import KMeans
+from sklearn.preprocessing import StandardScaler
+from sklearn.decomposition import PCA
+from sklearn.metrics import silhouette_score
+import matplotlib.pyplot as plt
+
+# ========== 1. 加载 / 生成数据 ==========
+# 这里以模拟数据为例；实际项目可读取 Mall_Customers.csv
+np.random.seed(42)
+n = 200
+data = pd.DataFrame({
+    '年龄': np.concatenate([
+        np.random.normal(25, 3, 60),
+        np.random.normal(35, 5, 80),
+        np.random.normal(50, 8, 60),
+    ]),
+    '年收入': np.concatenate([
+        np.random.normal(15, 3, 60),
+        np.random.normal(50, 10, 80),
+        np.random.normal(80, 15, 60),
+    ]),
+    '消费分数': np.concatenate([
+        np.random.normal(80, 10, 60),
+        np.random.normal(50, 15, 80),
+        np.random.normal(30, 10, 60),
+    ])
+})
+
+# ========== 2. 数据预处理 ==========
+scaler = StandardScaler()
+X_scaled = scaler.fit_transform(data)
+
+# ========== 3. 选择最优 K（肘部法则 + 轮廓系数） ==========
+inertias, silhouettes = [], []
+K_range = range(2, 9)
+
+for k in K_range:
+    km = KMeans(n_clusters=k, init='k-means++', n_init=10, random_state=42)
+    km.fit(X_scaled)
+    inertias.append(km.inertia_)
+    silhouettes.append(silhouette_score(X_scaled, km.labels_))
+
+best_k = list(K_range)[np.argmax(silhouettes)]
+print(f"最优 K: {best_k}")
+
+# ========== 4. 聚类分析 ==========
+kmeans = KMeans(n_clusters=best_k, init='k-means++', n_init=10, random_state=42)
+data['客户群'] = kmeans.fit_predict(X_scaled)
+
+for cluster in range(best_k):
+    group = data[data['客户群'] == cluster]
+    print(f"\n客户群{cluster}（{len(group)}人）:")
+    print(f"  平均年龄: {group['年龄'].mean():.1f}")
+    print(f"  平均收入: {group['年收入'].mean():.1f} 万")
+    print(f"  平均消费: {group['消费分数'].mean():.1f}")
+
+# ========== 5. PCA 降到 2D 可视化 ==========
+pca = PCA(n_components=2)
+X_2d = pca.fit_transform(X_scaled)
+
+plt.figure(figsize=(10, 7))
+colors = ['#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4']
+for cluster in range(best_k):
+    mask = data['客户群'] == cluster
+    plt.scatter(X_2d[mask, 0], X_2d[mask, 1],
+                c=colors[cluster], label=f'客户群{cluster}', alpha=0.6, s=50)
+
+centers_2d = pca.transform(kmeans.cluster_centers_)
+plt.scatter(centers_2d[:, 0], centers_2d[:, 1],
+            c='black', marker='X', s=200, label='聚类中心')
+
+plt.title('客户分群结果')
+plt.xlabel('PC1')
+plt.ylabel('PC2')
+plt.legend()
+plt.show()
+```
+
+## 关键知识点
+
+- K-Means 聚类的完整流程
+- 肘部法则和轮廓系数选择 K
+- 聚类结果的商业解读
+- PCA 可视化聚类效果
+
+## 学完应该掌握
+
+用 K-Means 做客户分群，理解无监督学习的商业价值
+
+## 推荐阅读
+
+- Kaggle《Mall Customer Segmentation》案例
+- Scikit-learn 聚类文档
+
+<!-- ============================================ -->
+<!-- 以下内容由 scripts/sync-knowledge.py 同步自顶层原稿 knowledge/ -->
+<!-- 仅供阅读参考；正文以本文件原有章节为准，重复段落由维护者清理。 -->
+<!-- ============================================ -->
+
+# 客户分群（聚类项目）
+
+## 项目概述
+
+使用K-Means聚类算法对商场客户进行分群，是无监督学习的经典商业应用。通过客户的消费金额、消费频率、年龄等特征，将客户分成不同群体，帮助企业制定精准营销策略。
+
+## 完整代码
+
+```python
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+from sklearn.cluster import KMeans
+from sklearn.preprocessing import StandardScaler
+from sklearn.decomposition import PCA
+from sklearn.metrics import silhouette_score
+
+# ========== 1. 生成模拟数据 ==========
+np.random.seed(42)
+n = 200
+data = pd.DataFrame({
+    '年龄': np.concatenate([
+        np.random.normal(25, 3, 60),   # 年轻人
+        np.random.normal(35, 5, 80),   # 中年人
+        np.random.normal(50, 8, 60)    # 老年人
+    ]),
+    '年收入': np.concatenate([
+        np.random.normal(15, 3, 60),   # 低收入
+        np.random.normal(50, 10, 80),  # 中等收入
+        np.random.normal(80, 15, 60)   # 高收入
+    ]),
+    '消费分数': np.concatenate([
+        np.random.normal(80, 10, 60),  # 高消费
+        np.random.normal(50, 15, 80),  # 中等消费
+        np.random.normal(30, 10, 60)   # 低消费
+    ])
+})
+print(data.describe())
+
+# ========== 2. 数据预处理 ==========
+scaler = StandardScaler()
+X_scaled = scaler.fit_transform(data)
+
+# ========== 3. 选择最优K ==========
+inertias = []
+silhouettes = []
+K_range = range(2, 9)
+
+for k in K_range:
+    km = KMeans(n_clusters=k, init='k-means++', n_init=10, random_state=42)
+    km.fit(X_scaled)
+    inertias.append(km.inertia_)
+    silhouettes.append(silhouette_score(X_scaled, km.labels_))
+
+fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 4))
+ax1.plot(K_range, inertias, 'bo-')
+ax1.set_title('肘部法则')
+ax1.set_xlabel('K')
+ax1.set_ylabel('Inertia')
+
+ax2.plot(K_range, silhouettes, 'ro-')
+ax2.set_title('轮廓系数')
+ax2.set_xlabel('K')
+ax2.set_ylabel('Silhouette Score')
+
+plt.tight_layout()
+plt.savefig("customer_elbow.png", dpi=100)
+plt.show()
+
+best_k = list(K_range)[np.argmax(silhouettes)]
+print(f"最优K: {best_k}")
+
+# ========== 4. 聚类分析 ==========
+kmeans = KMeans(n_clusters=best_k, init='k-means++', n_init=10, random_state=42)
+data['客户群'] = kmeans.fit_predict(X_scaled)
+
+# 各群体特征分析
+print("\n各客户群特征:")
+for cluster in range(best_k):
+    group = data[data['客户群'] == cluster]
+    print(f"\n客户群{cluster} ({len(group)}人):")
+    print(f"  平均年龄: {group['年龄'].mean():.1f}")
+    print(f"  平均收入: {group['年收入'].mean():.1f}万")
+    print(f"  平均消费: {group['消费分数'].mean():.1f}")
+
+# ========== 5. 可视化 ==========
+# PCA降到2D
+pca = PCA(n_components=2)
+X_2d = pca.fit_transform(X_scaled)
+
+plt.figure(figsize=(10, 7))
+colors = ['#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4']
+for cluster in range(best_k):
+    mask = data['客户群'] == cluster
+    plt.scatter(X_2d[mask, 0], X_2d[mask, 1],
+                c=colors[cluster], label=f'客户群{cluster}', alpha=0.6, s=50)
+
+# 画聚类中心
+centers_2d = pca.transform(kmeans.cluster_centers_)
+plt.scatter(centers_2d[:, 0], centers_2d[:, 1], c='black', marker='X', s=200, label='聚类中心')
+
+plt.title('客户分群结果')
+plt.xlabel('PC1')
+plt.ylabel('PC2')
+plt.legend()
+plt.savefig("customer_clusters.png", dpi=100)
+plt.show()
+```
+
+## 关键知识点
+
+- K-Means聚类的完整流程
+- 肘部法则和轮廓系数选择K
+- 聚类结果的商业解读
+- PCA可视化聚类效果
+
+## 学完应该掌握
+
+用K-Means做客户分群，理解无监督学习的商业价值

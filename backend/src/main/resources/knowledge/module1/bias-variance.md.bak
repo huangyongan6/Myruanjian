@@ -1,0 +1,93 @@
+# 偏差与方差
+
+## 概念介绍
+
+偏差（Bias）和方差（Variance）是衡量模型泛化能力的两个关键维度。任何模型都会同时具有这两种误差，理解它们的来源和权衡是调参的核心。
+
+- **偏差**：模型的"拟合能力"够不够。偏差高 = 模型太简单，学不到数据规律（欠拟合）。
+- **方差**：模型的"稳定性"好不好。方差高 = 模型过度记忆训练数据的细节（过拟合）。
+
+打个比方：偏差就像一个学生不认真学习考试内容，方差就像他只死记硬背这次考试的题目。两类学生新一次考试都不会考好。
+
+完美的模型应该"低偏差、低方差"，但在实际中往往需要权衡——复杂的模型偏差低方差高，简单的模型偏差高方差低。
+
+## 核心原理
+
+### 数学表达
+
+模型的期望误差可以分解为：
+
+```
+E[(f̂ - f)²] = Bias²(f̂) + Var(f̂) + Noise
+```
+
+- **Bias²**：模型预测的平均值与真实函数的偏离程度。
+- **Var**：不同训练集训练出的模型之间的差异。
+- **Noise**：数据本身的不可约误差（与模型无关）。
+
+### 偏差-方差权衡
+
+| 模型复杂度 | 偏差 | 方差 | 总误差 |
+|-----------|------|------|--------|
+| 简单（欠拟合） | 高 | 低 | 高 |
+| 刚好 | 中 | 中 | 最低 |
+| 复杂（过拟合） | 低 | 高 | 高 |
+
+### 诊断方法
+
+- **高偏差（欠拟合）**：训练误差和验证误差都很高，且两者接近。
+- **高方差（过拟合）**：训练误差很低，但验证误差远高于训练误差。
+
+## 代码实现
+
+```python
+import numpy as np
+import matplotlib.pyplot as plt
+from sklearn.model_selection import learning_curve
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.datasets import load_iris
+
+X, y = load_iris(return_X_y=True)
+
+# 用学习曲线判断偏差/方差
+train_sizes, train_scores, val_scores = learning_curve(
+    DecisionTreeClassifier(max_depth=3, random_state=42),
+    X, y, cv=5, scoring='accuracy',
+    train_sizes=np.linspace(0.1, 1.0, 10)
+)
+
+train_mean = train_scores.mean(axis=1)
+val_mean = val_scores.mean(axis=1)
+
+print(f"{'训练集大小':>10} {'训练准确率':>12} {'验证准确率':>12} {'差距':>8}")
+for s, t, v in zip(train_sizes, train_mean, val_mean):
+    print(f"{s*len(X):>10.0f} {t:>12.4f} {v:>12.4f} {t-v:>8.4f}")
+```
+
+## 适用场景
+
+- 模型选择：用学习曲线诊断偏差/方差，对症下药。
+- 超参数调优：在欠拟合与过拟合间找平衡点。
+
+## 常见易错点
+
+1. **混用"偏差"和"偏差项"**：偏差项 = 模型对真实函数的偏离；偏差陷阱 = 模型预测的平均偏差。
+2. **不看学习曲线就调参**：必须先判断是偏差高还是方差高，再决定怎么调。
+3. **把"高准确率"当万能目标**：高方差模型在测试集上可能崩盘，应该看验证集。
+
+## 练习题
+
+1. **选择题**：训练误差 0.01，验证误差 0.35，这是典型的？（A）欠拟合 （B）过拟合 （C）数据问题 （D）特征问题
+   - 答案：B
+
+2. **简答题**：欠拟合时应该怎么办？过拟合时应该怎么办？
+   - 答案：欠拟合（高偏差）：增加模型复杂度、加特征、减小正则化。过拟合（高方差）：增加数据、特征选择、增强正则化、简化模型、用集成方法。
+
+3. **编程题**：用 sklearn 的 `learning_curve` 画出决策树的学习曲线，判断其偏差/方差情况。
+
+## 推荐阅读
+
+- 周志华《机器学习》（西瓜书）第2章
+- Andrew Ng《机器学习》Coursera 第10-11周
+- Scikit-learn 学习曲线文档

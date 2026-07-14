@@ -1,0 +1,86 @@
+spring:
+  profiles:
+    active: dev
+    # CLAUDE.md §19：本地开发可从 application-local.yml（已在 .gitignore 中）读取 APIPassword
+    # 注意：spring.profiles.include 只能写在非 profile-specific 文件里（不能写在 application-dev.yml 里），否则启动报 InvalidConfigDataPropertyException
+    include: local
+  application:
+    name: learngen-backend
+  # 数据源由 application-dev.yml 提供，避免空配置启动失败
+  jackson:
+    date-format: yyyy-MM-dd HH:mm:ss
+    time-zone: Asia/Shanghai
+
+server:
+  port: 8080
+  servlet:
+    context-path: /
+
+# MyBatis-Plus 配置（CLAUDE.md §11）
+mybatis-plus:
+  configuration:
+    map-underscore-to-camel-case: true
+    log-impl: org.apache.ibatis.logging.nologging.NoLoggingImpl
+  global-config:
+    db-config:
+      id-type: AUTO
+      logic-delete-field: null
+  mapper-locations: classpath*:mapper/**/*.xml
+
+# 讯飞星火配置（CLAUDE.md §19：APIPassword 通过环境变量注入，禁硬编码）
+# HTTP 模式鉴权：Authorization: Bearer <APIPassword>
+# 主备切换（CLAUDE.md §20.1）：
+#   - 默认走 primary，遭遇限流/鉴权/网络异常时切到 secondary
+#   - secondary.api-password 留空 → 降级为单 key 行为
+#   - 单密钥对应特定模型版本（lite / generalv3 / generalv3.5 / 4.0Ultra）
+spark:
+  host: ${SPARK_HOST:spark-api-open.xf-yun.com}
+  api-path: ${SPARK_API_PATH:/v1/chat/completions}
+  model: ${SPARK_MODEL:generalv3.5}
+  connect-timeout-seconds: 10
+  read-timeout-seconds: 60
+  # 单次请求最大等待时长（含整个 SSE 流），超过则主动中断避免线程挂死
+  total-timeout-seconds: 120
+  temperature: 0.5
+  max-tokens: 2048
+
+  primary:
+    api-password: ${SPARK_API_PASSWORD_PRIMARY:please-set-via-env}
+    # 模型可独立覆盖；未设置时回退到顶层 spark.model（默认 generalv3.5）
+    model: ${SPARK_MODEL_PRIMARY:generalv3.5}
+  secondary:
+    api-password: ${SPARK_API_PASSWORD_SECONDARY:}
+    model: ${SPARK_MODEL_SECONDARY:generalv3.5}
+
+  # 熔断器：secondary 连续失败次数达阈值后冷却秒数（避免被无谓消耗）
+  failover:
+    secondary-failure-threshold: 3
+    secondary-cooldown-seconds: 60
+
+# 日志（CLAUDE.md §14.3 禁止 System.out，统一 SLF4J）
+logging:
+  level:
+    root: INFO
+    com.learngen: DEBUG
+
+# Actuator（CLAUDE.md §16：Docker 健康检查 / 监控指标）
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+      base-path: /actuator
+  endpoint:
+    health:
+      show-details: when_authorized
+      show-components: always
+  health:
+    db:
+      enabled: true
+    redis:
+      enabled: true
+    diskspace:
+      enabled: true
+  info:
+    env:
+      enabled: true

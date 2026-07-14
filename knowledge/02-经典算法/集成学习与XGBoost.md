@@ -1,0 +1,139 @@
+# 集成学习与XGBoost
+
+## 概念介绍
+
+集成学习（Ensemble Learning）的核心思想是"三个臭皮匠，赛过诸葛亮"——把多个弱学习器组合起来，形成一个强学习器。集成学习是目前机器学习竞赛中最强大的方法，Kaggle竞赛的获胜方案几乎都用了集成学习。
+
+XGBoost（eXtreme Gradient Boosting）是集成学习中最流行的算法，它在结构化数据（表格数据）上几乎无敌，被称为"竞赛神器"。XGBoost通过不断添加新的树来修正前面树的错误，最终把所有树的结果相加得到预测。
+
+## 核心原理
+
+### 两种集成策略
+
+**Bagging（装袋）**：并行训练多个模型，每个模型用随机子集数据，最后投票/平均。代表算法：随机森林。
+
+**Boosting（提升）**：串行训练多个模型，每个新模型重点关注前一个模型的错误。代表算法：AdaBoost、GBDT、XGBoost。
+
+### Boosting的直觉
+
+```
+第1棵树：学习数据的基本规律
+第2棵树：学习第1棵树的错误（残差）
+第3棵树：学习前2棵树的错误
+...
+第n棵树：学习前面所有树的错误
+最终预测 = 所有树的预测之和
+```
+
+### XGBoost的核心改进
+
+相比传统GBDT，XGBoost做了以下优化：
+
+**1. 正则化目标函数**：
+```
+Obj = Σ L(yᵢ, ŷᵢ) + Σ Ω(fₖ)
+其中 Ω(f) = γT + (1/2)λ||w||²
+```
+T是叶节点数，w是叶节点权重，防止过拟合。
+
+**2. 二阶泰勒展开**：同时使用一阶导数和二阶导数，收敛更快。
+
+**3. 列采样**：类似随机森林，每棵树只用部分特征，防止过拟合。
+
+**4. 缺失值处理**：自动学习缺失值的最优分裂方向。
+
+**5. 并行化**：特征分裂的候选值计算并行化，训练速度快。
+
+## 代码实现
+
+```python
+import xgboost as xgb
+from sklearn.datasets import load_iris, fetch_california_housing
+from sklearn.model_selection import train_test_split, cross_val_score, GridSearchCV
+from sklearn.metrics import accuracy_score, mean_squared_error
+import numpy as np
+
+# ========== 分类 ==========
+X, y = load_iris(return_X_y=True)
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+model = xgb.XGBClassifier(
+    n_estimators=100,     # 树的数量
+    max_depth=3,          # 树的深度
+    learning_rate=0.1,    # 学习率（步长）
+    subsample=0.8,        # 行采样比例
+    colsample_bytree=0.8, # 列采样比例
+    reg_alpha=0.1,        # L1正则化
+    reg_lambda=1.0,       # L2正则化
+    random_state=42,
+    eval_metric='mlogloss'
+)
+model.fit(X_train, y_train, eval_set=[(X_test, y_test)], verbose=False)
+y_pred = model.predict(X_test)
+print(f"XGBoost准确率: {accuracy_score(y_test, y_pred):.4f}")
+
+# 特征重要性
+data = load_iris()
+print("\n特征重要性:")
+for name, imp in sorted(zip(data.feature_names, model.feature_importances_),
+                        key=lambda x: x[1], reverse=True):
+    print(f"  {name}: {imp:.4f}")
+
+# ========== 网格搜索调参 ==========
+param_grid = {
+    'n_estimators': [50, 100, 200],
+    'max_depth': [3, 5, 7],
+    'learning_rate': [0.01, 0.1, 0.2],
+}
+grid = GridSearchCV(xgb.XGBClassifier(random_state=42, eval_metric='mlogloss'),
+                    param_grid, cv=5, scoring='accuracy', n_jobs=-1)
+grid.fit(X_train, y_train)
+print(f"\n最佳参数: {grid.best_params_}")
+print(f"最佳分数: {grid.best_score_:.4f}")
+
+# ========== 回归 ==========
+housing = fetch_california_housing()
+X_h, y_h = housing.data, housing.target
+X_h_train, X_h_test, y_h_train, y_h_test = train_test_split(X_h, y_h, test_size=0.2, random_state=42)
+
+model_reg = xgb.XGBRegressor(n_estimators=100, max_depth=5, learning_rate=0.1, random_state=42)
+model_reg.fit(X_h_train, y_h_train)
+y_h_pred = model_reg.predict(X_h_test)
+print(f"\n回归RMSE: {np.sqrt(mean_squared_error(y_h_test, y_h_pred)):.4f}")
+```
+
+## 适用场景
+
+- 结构化/表格数据竞赛（Kaggle首选）
+- 特征工程后的分类/回归问题
+- 数据有缺失值的场景
+- 需要特征重要性分析
+- 工业界推荐系统、广告点击率预测
+
+## 常见易错点
+
+1. **学习率和树的数量要配合**：learning_rate小→n_estimators要大，反之亦然
+2. **max_depth太深**：容易过拟合，一般3-7就够了
+3. **不做早停**：大数据集应该设置early_stopping_rounds，防止过度训练
+4. **忽略正则化参数**：reg_alpha和reg_lambda对防止过拟合很重要
+
+## 练习题
+
+1. **选择题**：XGBoost属于哪种集成策略？（A）Bagging （B）Boosting （C）Stacking （D）Voting
+   - 答案：B
+
+2. **选择题**：以下哪个不是XGBoost的改进？（A）二阶泰勒展开 （B）正则化目标函数 （C）列采样 （D）K折交叉验证
+   - 答案：D
+
+3. **简答题**：XGBoost和随机森林的区别是什么？
+   - 答案：随机森林是Bagging策略，树之间并行独立训练，最后投票/平均；XGBoost是Boosting策略，树之间串行训练，每棵树修正前面树的错误。随机森林主要降低方差，XGBoost同时降低偏差和方差。
+
+4. **编程题**：用XGBoost对一个Kaggle风格的数据集做分类，尝试调参优化。
+   - 参考上面代码。
+
+## 推荐阅读
+
+- XGBoost原始论文：《XGBoost: A Scalable Tree Boosting System》
+- 西瓜书第8章
+- XGBoost官方文档：https://xgboost.readthedocs.io/
+- 陈天奇的介绍博客
