@@ -1,0 +1,15 @@
+# =====================================================================
+# 本地个人配置（CLAUDE.md §14.1：敏感信息禁止提交）
+# 本文件已在 .gitignore 中，不会进 git；仅当前开发者本机生效。
+# 仅在 spring.profiles.include=local 或 active=local 时加载。
+# =====================================================================
+
+# 讯飞星火 APIPassword（OpenAI 兼容鉴权：Authorization: Bearer <password>）
+# 主备：默认走 primary，primary 限流/鉴权错误时切到 secondary
+# ⚠️ 本文件含真实密钥——已在 backend/.gitignore，不进 git；
+#    但因在本对话中明文出现，建议在讯飞控制台主动重置。
+spark:
+  primary:
+    api-password: JehyyQnWeFUZZuadsQIS:ZaejEuTZPRGaNDLLcuwj
+  secondary:
+    api-password: vOOCRGppmeHNngoZjdwd:bdBAXrPrhCkUfKvwQSuY

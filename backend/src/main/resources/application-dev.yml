@@ -4,7 +4,7 @@ spring:
     # 注意：Connector/J 8.x 要求 JDK 标准字符集名（UTF-8），mysql 服务端会自动映射到 utf8mb4
     url: jdbc:mysql://${DB_HOST:localhost}:${DB_PORT:3306}/${DB_NAME:Random}?useUnicode=true&characterEncoding=UTF-8&useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true
     username: ${DB_USER:root}
-    password: ${DB_PASSWORD:jsm60605304}
+    password: ${DB_PASSWORD:hya20050514}
     driver-class-name: com.mysql.cj.jdbc.Driver
     hikari:
       maximum-pool-size: 16

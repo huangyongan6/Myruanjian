@@ -20,10 +20,6 @@ Thumbs.db
 logs/
 
 # 环境配置（CLAUDE.md §14.1：敏感信息禁止提交）
-application-local.yml
-application-prod.yml
-.env
-.env.local
 
 # 构建产物
 *.jar

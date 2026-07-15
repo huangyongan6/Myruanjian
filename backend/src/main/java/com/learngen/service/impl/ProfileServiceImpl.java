@@ -18,6 +18,7 @@ import com.learngen.service.LearningRecordService;
 import com.learngen.service.PathService;
 import com.learngen.service.ProfileService;
 import com.learngen.service.ResourceService;
+import com.learngen.service.StudentService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.ObjectProvider;
@@ -57,6 +58,7 @@ public class ProfileServiceImpl implements ProfileService {
     private final RedisCacheSupport cache;
     private final ChatService chatService;
     private final LearningRecordService recordService;
+    private final StudentService studentService;
     private final ObjectProvider<PathService> pathServiceProvider;
     private final ObjectProvider<ResourceService> resourceServiceProvider;
 
@@ -81,6 +83,11 @@ public class ProfileServiceImpl implements ProfileService {
 
     @Override
     public StudentProfile upsertFromAgent(Long studentId, String conversationContext) {
+        // 0. 校验学生存在：student_profile.student_id 外键引用 student.id，
+        //    缺失会在 insert 时触发 SQLIntegrityConstraintViolationException，
+        //    这里 fail-fast 抛 404，行为与 RecommendServiceImpl 保持一致。
+        studentService.getById(studentId);
+
         // 1. 构建综合上下文：对话历史 + 学习记录统计
         String fullContext = buildProfileContext(studentId, conversationContext);
 

@@ -1,0 +1,35 @@
+spring:
+  datasource:
+    # 生产环境：所有敏感信息通过环境变量注入（CLAUDE.md §14.1）
+    # 注意：Connector/J 8.x 要求 JDK 标准字符集名（UTF-8），mysql 服务端会自动映射到 utf8mb4
+    url: jdbc:mysql://${DB_HOST:mysql}:${DB_PORT:3306}/${DB_NAME:Random}?useUnicode=true&characterEncoding=UTF-8&useSSL=true&serverTimezone=Asia/Shanghai
+    username: ${DB_USER}
+    password: ${DB_PASSWORD}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    hikari:
+      maximum-pool-size: 32
+      minimum-idle: 4
+      connection-timeout: 30000
+
+  data:
+    redis:
+      host: ${REDIS_HOST:redis}
+      port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASSWORD:}
+      database: 0
+      timeout: 5s
+      lettuce:
+        pool:
+          max-active: 32
+          max-idle: 16
+          min-idle: 4
+
+# 生产环境关闭 SQL 调试日志（CLAUDE.md §14.2）
+mybatis-plus:
+  configuration:
+    log-impl: org.apache.ibatis.logging.nologging.NoLoggingImpl
+
+logging:
+  level:
+    root: INFO
+    com.learngen: INFO
