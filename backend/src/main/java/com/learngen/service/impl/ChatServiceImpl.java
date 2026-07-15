@@ -51,9 +51,10 @@ public class ChatServiceImpl implements ChatService {
 
     /** 关键词 → agentType 的映射表(CLAUDE.md §3.3).  */
     private static final Map<String, String> INTENT_RULES = Map.ofEntries(
-            Map.entry("介绍", "profile"),
-            Map.entry("我是", "profile"),
-            Map.entry("背景", "profile"),
+            // profile：仅当明确要求生成/分析画像时触发，避免日常对话被误路由
+            Map.entry("生成我的画像", "profile"),
+            Map.entry("分析我的画像", "profile"),
+            Map.entry("生成学习画像", "profile"),
             Map.entry("讲解", "doc"),
             Map.entry("解释", "doc"),
             Map.entry("什么是", "doc"),
@@ -70,10 +71,10 @@ public class ChatServiceImpl implements ChatService {
             Map.entry("实操", "code"),
             Map.entry("案例", "code"),
             Map.entry("项目", "code"),
-            Map.entry("路径", "path"),
-            Map.entry("规划", "path"),
-            Map.entry("计划", "path"),
-            Map.entry("怎么学", "path")
+            // path：仅当明确要求生成/规划"学习路径"时触发
+            Map.entry("生成学习路径", "path"),
+            Map.entry("规划学习路径", "path"),
+            Map.entry("给我一个学习路径", "path")
     );
 
     @Override

@@ -191,22 +191,41 @@ onMounted(() => {
     </div>
 
     <div class="chat-page__composer">
-      <el-input
-        v-model="input"
-        type="textarea"
-        :rows="3"
-        :disabled="sending"
-        placeholder="输入消息后回车发送，Shift+Enter 换行"
-        @keydown="handleKeydown"
-      />
-      <el-button
-        type="primary"
-        :loading="sending"
-        :disabled="!input.trim()"
-        @click="handleSend"
-      >
-        发送
-      </el-button>
+      <div class="chat-page__composer-outer">
+        <div class="chat-page__composer-box">
+          <el-input
+            v-model="input"
+            type="textarea"
+            :rows="4"
+            :disabled="sending"
+            placeholder="输入消息，告诉我你在学习什么、有什么困惑..."
+            resize="none"
+            @keydown="handleKeydown"
+          />
+          <div class="chat-page__composer-footer">
+            <div class="chat-page__composer-tips">
+              <span class="chat-page__composer-tip">
+                <kbd>Enter</kbd> 发送
+              </span>
+              <span class="chat-page__composer-tip">
+                <kbd>Shift</kbd><kbd>Enter</kbd> 换行
+              </span>
+            </div>
+            <el-button
+              type="primary"
+              :loading="sending"
+              :disabled="!input.trim()"
+              class="chat-page__composer-send"
+              @click="handleSend"
+            >
+              发送
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" style="margin-left: 4px;">
+                <path d="M22 2L11 13M22 2L15.01 21.01L10.94 16.94M22 2L2 22L10.94 2M10.94 2L22 13M16.94 11.01L2 22" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </el-button>
+          </div>
+        </div>
+      </div>
     </div>
 
     <el-dialog v-model="showInitDialog" title="欢迎使用智能学习助手" width="420px" :show-close="false" :close-on-click-modal="false">
@@ -253,10 +272,85 @@ onMounted(() => {
   }
   &__composer {
     margin-top: $spacing-md;
+  }
+
+  &__composer-outer {
+    border-radius: 16px;
+    background: transparent;
+  }
+
+  &__composer-box {
+    background: $bg-card;
+    border-radius: 14px;
+    padding: $spacing-md;
     display: flex;
+    flex-direction: column;
     gap: $spacing-sm;
-    align-items: flex-end;
-    .el-textarea { flex: 1; }
+    border: 1px solid transparent;
+    transition: border-color 0.25s ease;
+
+    &:focus-within {
+      border-color: rgba(0, 0, 0, 0.12);
+    }
+
+    :deep(.el-textarea__inner) {
+      border: none;
+      padding: 0;
+      font-size: 15px;
+      line-height: 1;
+      color: $text-primary;
+      background: transparent;
+      resize: none;
+
+      &::placeholder {
+        color: $text-placeholder;
+      }
+
+      &:focus {
+        outline: none;
+        box-shadow: none;
+      }
+    }
+  }
+
+  &__composer-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: $spacing-xs;
+  }
+
+  &__composer-tips {
+    display: flex;
+    align-items: center;
+    gap: $spacing-sm;
+  }
+
+  &__composer-tip {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    font-size: 12px;
+    color: $text-placeholder;
+
+    kbd {
+      display: inline-flex;
+      align-items: center;
+      padding: 2px 6px;
+      background: $bg-page;
+      border: 1px solid darken($border-extra-light, 3%);
+      border-radius: 5px;
+      font-size: 11px;
+      font-family: inherit;
+      color: $text-secondary;
+    }
+  }
+
+  &__composer-send {
+    border-radius: 8px;
+    font-size: 13px;
+    display: inline-flex;
+    align-items: center;
   }
   &__dialog-tip {
     color: $text-regular;

@@ -25,6 +25,7 @@ const activePath = computed(() => route.path)
 const currentTitle = computed(
   () => navItems.find((item) => item.path === route.path)?.title ?? '智能学习助手'
 )
+const isWelcomePage = computed(() => route.name === 'Welcome')
 
 function navigate(path: string): void {
   if (path !== route.path) {
@@ -35,45 +36,56 @@ function navigate(path: string): void {
 
 <template>
   <el-container class="app-container">
-    <el-aside width="220px" class="app-aside">
-      <div class="app-logo">
-        <el-icon :size="22" color="#fff"><Reading /></el-icon>
-        <span class="app-logo__title">智能学习助手</span>
-      </div>
-      <el-menu
-        :default-active="activePath"
-        class="app-menu"
-        background-color="#1f2d3d"
-        text-color="#bfcbd9"
-        active-text-color="#409eff"
-        @select="navigate"
-      >
-        <el-menu-item v-for="item in navItems" :key="item.path" :index="item.path">
-          <el-icon><component :is="item.icon" /></el-icon>
-          <span>{{ item.title }}</span>
-        </el-menu-item>
-      </el-menu>
-    </el-aside>
-
-    <el-container>
-      <el-header class="app-header">
-        <span class="app-header__title">{{ currentTitle }}</span>
-        <div class="app-header__right">
-          <span v-if="studentStore.currentStudent" class="app-header__student">
-            当前学生：{{ studentStore.currentStudent.name }} (ID: {{ studentStore.currentStudent.id }})
-          </span>
-          <el-tag v-else type="warning" size="small">未选择学生</el-tag>
+    <template v-if="!isWelcomePage">
+      <el-aside width="220px" class="app-aside">
+        <div class="app-logo">
+          <el-icon :size="22" color="#fff"><Reading /></el-icon>
+          <span class="app-logo__title">智能学习助手</span>
         </div>
-      </el-header>
+        <el-menu
+          :default-active="activePath"
+          class="app-menu"
+          background-color="#1f2d3d"
+          text-color="#bfcbd9"
+          active-text-color="#409eff"
+          @select="navigate"
+        >
+          <el-menu-item v-for="item in navItems" :key="item.path" :index="item.path">
+            <el-icon><component :is="item.icon" /></el-icon>
+            <span>{{ item.title }}</span>
+          </el-menu-item>
+        </el-menu>
+      </el-aside>
 
-      <el-main class="app-main">
+      <el-container>
+        <el-header class="app-header">
+          <span class="app-header__title">{{ currentTitle }}</span>
+          <div class="app-header__right">
+            <span v-if="studentStore.currentStudent" class="app-header__student">
+              当前学生：{{ studentStore.currentStudent.name }} (ID: {{ studentStore.currentStudent.id }})
+            </span>
+            <el-tag v-else type="warning" size="small">未选择学生</el-tag>
+          </div>
+        </el-header>
+
+        <el-main class="app-main">
+          <router-view v-slot="{ Component }">
+            <transition name="fade" mode="out-in">
+              <component :is="Component" />
+            </transition>
+          </router-view>
+        </el-main>
+      </el-container>
+    </template>
+    <template v-else>
+      <el-main class="app-main app-main--full">
         <router-view v-slot="{ Component }">
           <transition name="fade" mode="out-in">
             <component :is="Component" />
           </transition>
         </router-view>
       </el-main>
-    </el-container>
+    </template>
   </el-container>
 </template>
 
@@ -139,6 +151,11 @@ function navigate(path: string): void {
   background-color: $bg-page;
   padding: 0;
   overflow-y: auto;
+
+  &--full {
+    padding: 0;
+    overflow-y: auto;
+  }
 }
 
 .fade-enter-active,

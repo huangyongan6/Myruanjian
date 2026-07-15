@@ -13,7 +13,9 @@ const router = createRouter({
   routes: [
     {
       path: '/',
-      redirect: '/chat'
+      name: 'Welcome',
+      component: () => import('@/pages/Welcome/Welcome.vue'),
+      meta: { title: '欢迎' }
     },
     {
       path: '/chat',
