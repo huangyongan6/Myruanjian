@@ -58,4 +58,22 @@ public interface ChatService {
      * @param before    可选游标；为 null 时取最新 limit 条
      */
     List<ChatMessage> history(Long studentId, int limit, String before);
+
+    /**
+     * 清除某学生的所有对话历史。
+     *
+     * @param studentId 学生 ID
+     */
+    void clearHistory(Long studentId);
+
+    /**
+     * 删除某学生最新的未完成对话（一对：用户消息 + assistant 消息，用于打断场景）。
+     *
+     * <p>当用户发送新消息打断当前 AI 回复时，调用此方法删除数据库中
+     * 可能已经写入的用户消息和 assistant 消息，保证对话历史的纯净。
+     *
+     * @param studentId 学生 ID
+     * @return 是否删除了消息
+     */
+    boolean deleteLastConversationPair(Long studentId);
 }

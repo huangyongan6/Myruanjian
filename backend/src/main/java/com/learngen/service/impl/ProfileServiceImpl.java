@@ -9,15 +9,25 @@ import com.learngen.agent.Orchestrator;
 import com.learngen.cache.RedisCacheSupport;
 import com.learngen.exception.BusinessException;
 import com.learngen.mapper.StudentProfileMapper;
+import com.learngen.model.ChatMessage;
+import com.learngen.model.LearningRecord;
+import com.learngen.model.LearningResource;
 import com.learngen.model.StudentProfile;
+import com.learngen.service.ChatService;
+import com.learngen.service.LearningRecordService;
+import com.learngen.service.PathService;
 import com.learngen.service.ProfileService;
+import com.learngen.service.ResourceService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -45,6 +55,10 @@ public class ProfileServiceImpl implements ProfileService {
     private final Orchestrator orchestrator;
     private final ObjectMapper objectMapper;
     private final RedisCacheSupport cache;
+    private final ChatService chatService;
+    private final LearningRecordService recordService;
+    private final ObjectProvider<PathService> pathServiceProvider;
+    private final ObjectProvider<ResourceService> resourceServiceProvider;
 
     @Override
     public StudentProfile getByStudentId(Long studentId) {
@@ -67,11 +81,14 @@ public class ProfileServiceImpl implements ProfileService {
 
     @Override
     public StudentProfile upsertFromAgent(Long studentId, String conversationContext) {
-        // 1. 调 ProfileAgent 抽取画像
+        // 1. 构建综合上下文：对话历史 + 学习记录统计
+        String fullContext = buildProfileContext(studentId, conversationContext);
+
+        // 2. 调 ProfileAgent 抽取画像
         AgentMessage result = orchestrator.dispatch("profile", AgentMessage.builder()
                 .studentId(studentId)
                 .role("user")
-                .content(conversationContext)
+                .content(fullContext)
                 .build());
 
         String payload = result.getPayload() == null ? "{}" : result.getPayload();
@@ -236,5 +253,165 @@ public class ProfileServiceImpl implements ProfileService {
         String weakPoints;
         String learningPace;
         String interestArea;
+    }
+
+    /**
+     * 构建画像生成的综合上下文：整合对话历史 + 学习记录 + 学习路线数据。
+     *
+     * <p>让 ProfileAgent 基于真实学习行为数据（而非仅对话）来推断学生画像，
+     * 使画像更准确、更具客观性。
+     */
+    private String buildProfileContext(Long studentId, String conversationContext) {
+        StringBuilder sb = new StringBuilder();
+
+        // 1. 对话历史摘要（最近 20 条）
+        List<ChatMessage> recentChats = chatService.history(studentId, 20, null);
+        if (!recentChats.isEmpty()) {
+            sb.append("【对话历史摘要】（最近的 ").append(recentChats.size()).append(" 条对话）\n");
+            for (ChatMessage msg : recentChats) {
+                String role = "user".equals(msg.getRole()) ? "学生" : "助手";
+                String content = msg.getContent();
+                if (content != null && content.length() > 200) {
+                    content = content.substring(0, 200) + "...";
+                }
+                sb.append("- ").append(role).append("：").append(content).append("\n");
+            }
+            sb.append("\n");
+        }
+
+        // 2. 学习记录统计（资源中心学习情况）
+        Map<String, Object> evaluation = recordService.evaluate(studentId);
+        if (evaluation != null && !evaluation.isEmpty()) {
+            sb.append("【资源中心学习统计】\n");
+            int viewCount = ((Number) evaluation.getOrDefault("viewCount", 0)).intValue();
+            int completeCount = ((Number) evaluation.getOrDefault("completeCount", 0)).intValue();
+            int quizCount = ((Number) evaluation.getOrDefault("quizCount", 0)).intValue();
+            Object avgScore = evaluation.get("averageScore");
+            double completionRate = ((Number) evaluation.getOrDefault("completionRate", 0)).doubleValue();
+            Object totalDuration = evaluation.get("totalDurationSeconds");
+
+            sb.append("- 浏览资源数：").append(viewCount).append("\n");
+            sb.append("- 完成资源数：").append(completeCount).append("\n");
+            sb.append("- 答题数：").append(quizCount).append("\n");
+            sb.append("- 答题平均分：").append(avgScore != null ? String.format("%.1f", avgScore) : "无").append("\n");
+            sb.append("- 完成率：").append(String.format("%.1f%%", completionRate * 100)).append("\n");
+            if (totalDuration != null) {
+                int totalSeconds = ((Number) totalDuration).intValue();
+                sb.append("- 累计学习时长：").append(totalSeconds / 60).append(" 分钟\n");
+
+                // 计算日均学习时长 = 累计时长 / 学习天数
+                var records = recordService.listByStudent(studentId);
+                if (!records.isEmpty()) {
+                    // 获取有学习记录的首尾日期
+                    LearningRecord first = records.get(records.size() - 1);  // 按时间倒序，最后一条是最早的
+                    LearningRecord last = records.get(0);  // 第一条是最新的
+
+                    if (first.getCreatedAt() != null && last.getCreatedAt() != null) {
+                        long daysBetween = java.time.temporal.ChronoUnit.DAYS.between(
+                            first.getCreatedAt().toLocalDate(),
+                            last.getCreatedAt().toLocalDate()) + 1;  // +1 包含首尾两天
+
+                        if (daysBetween > 0) {
+                            double avgMinutes = (totalSeconds / 60.0) / daysBetween;
+                            sb.append("- 日均学习时长：").append(String.format("%.1f", avgMinutes)).append(" 分钟/天\n");
+                            sb.append("  （基于 ").append(daysBetween).append(" 天的学习记录）\n");
+                        }
+                    }
+                }
+            }
+            // 分析推断建议
+            sb.append("\n  → 推断参考：\n");
+            if (avgScore != null) {
+                double score = ((Number) avgScore).doubleValue();
+                if (score >= 80) {
+                    sb.append("    答题表现优秀，知识掌握较好\n");
+                } else if (score >= 60) {
+                    sb.append("    答题表现一般，存在薄弱环节\n");
+                } else {
+                    sb.append("    答题表现较差，建议加强基础知识\n");
+                }
+            }
+            if (completionRate >= 0.7) {
+                sb.append("    学习完成率高，学习态度认真\n");
+            } else if (completionRate >= 0.4) {
+                sb.append("    学习完成率中等，可适当调整节奏\n");
+            } else if (viewCount > 0) {
+                sb.append("    学习完成率偏低，可能需要更简单的起点\n");
+            }
+            sb.append("\n");
+        }
+
+        // 3. 答题薄弱知识点分析（基于 Quiz 资源得分统计）
+        try {
+            ResourceService resourceService = resourceServiceProvider.getObject();
+            List<LearningRecord> allRecords = recordService.listByStudent(studentId);
+            // 按知识点聚合答题分数
+            Map<String, List<Integer>> quizByKpoint = new java.util.HashMap<>();
+            for (LearningRecord r : allRecords) {
+                if ("quiz".equals(r.getAction()) && r.getResourceId() != null && r.getScore() != null) {
+                    LearningResource res = resourceService.getById(r.getResourceId());
+                    if (res != null && res.getKnowledgePoint() != null) {
+                        quizByKpoint.computeIfAbsent(res.getKnowledgePoint(), k -> new java.util.ArrayList<>()).add(r.getScore());
+                    }
+                }
+            }
+            if (!quizByKpoint.isEmpty()) {
+                sb.append("【答题薄弱知识点分析】（基于每次 quiz 得分）\n");
+                // 计算每个知识点的平均分，按升序排列（最低的在前 = 最薄弱）
+                List<Map.Entry<String, Double>> sorted = new java.util.ArrayList<>();
+                for (var entry : quizByKpoint.entrySet()) {
+                    double avg = entry.getValue().stream().mapToInt(Integer::intValue).average().orElse(0);
+                    sorted.add(Map.entry(entry.getKey(), avg));
+                }
+                sorted.sort((a, b) -> Double.compare(a.getValue(), b.getValue()));
+                int rank = 1;
+                for (var entry : sorted) {
+                    String kp = entry.getKey();
+                    double avg = entry.getValue();
+                    String level = avg >= 80 ? "掌握良好" : avg >= 60 ? "一般" : "薄弱";
+                    sb.append(String.format("  %d. %s（均分 %.1f） - %s\n", rank++, kp, avg, level));
+                }
+                // 标记薄弱知识点（平均分 < 70）
+                List<String> weakList = sorted.stream()
+                        .filter(e -> e.getValue() < 70)
+                        .map(Map.Entry::getKey)
+                        .toList();
+                if (!weakList.isEmpty()) {
+                    sb.append("  → 建议重点复习：").append(String.join("、", weakList)).append("\n");
+                }
+                sb.append("\n");
+            }
+        } catch (Exception e) {
+            log.debug("答题薄弱知识点分析失败 studentId={}: {}", studentId, e.getMessage());
+        }
+
+        // 4. 学习路线统计
+        try {
+            PathService pathService = pathServiceProvider.getObject();
+            var path = pathService.getLatest(studentId);
+            if (path != null) {
+                sb.append("【学习路线情况】\n");
+                sb.append("- 路线总步数：").append(path.getTotalSteps()).append("\n");
+                sb.append("- 当前进度：第 ").append(path.getCurrentStep()).append(" 步\n");
+                double progress = path.getTotalSteps() > 0
+                        ? (path.getCurrentStep() * 100.0 / path.getTotalSteps()) : 0;
+                sb.append("- 完成进度：").append(String.format("%.1f%%", progress)).append("\n");
+                if (progress > 50) {
+                    sb.append("  → 学习进度良好，坚持即可完成\n");
+                } else if (progress > 0) {
+                    sb.append("  → 学习进度较慢，建议调整学习计划\n");
+                }
+                sb.append("\n");
+            }
+        } catch (Exception e) {
+            log.debug("获取学习路线失败 studentId={}: {}", studentId, e.getMessage());
+        }
+
+        // 4. 外部传入的对话上下文（可选）
+        if (conversationContext != null && !conversationContext.isBlank()) {
+            sb.append("【本次对话内容】\n").append(conversationContext).append("\n");
+        }
+
+        return sb.toString();
     }
 }

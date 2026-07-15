@@ -120,11 +120,8 @@ async function confirmGenerate(): Promise<void> {
 function viewDetail(resource: LearningResource): void {
   detailResource.value = resource
   detailVisible.value = true
-  // 打开即记一条浏览行为，并开始计时
+  // 开始计时，duration 在关闭时结算
   viewStartAt = Date.now()
-  if (studentId.value !== null) {
-    void trackAction({ studentId: studentId.value, action: 'view' })
-  }
 }
 
 /**
@@ -134,7 +131,8 @@ function onDetailClose(): void {
   clearProgress()
   if (studentId.value !== null && viewStartAt > 0) {
     const duration = Math.round((Date.now() - viewStartAt) / 1000)
-    if (duration > 0) {
+    // 只在有有效时长时记录
+    if (duration >= 1) {
       void trackAction({ studentId: studentId.value, action: 'view', duration })
     }
   }

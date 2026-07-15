@@ -52,7 +52,7 @@ async function handleSend(): Promise<void> {
   const text = input.value.trim()
   if (!text) return
   sending.value = true
-  // 用户发送消息后重置主动滑动标志，发送过程中自动滚动
+  // 用户发送消息后重置主动滑动标志
   userScrolled.value = false
   // 如果 AI 正在输出，先终止当前输出
   if (isStreamingActive.value) {
@@ -61,7 +61,12 @@ async function handleSend(): Promise<void> {
   try {
     await sendMessage(text)
     input.value = ''
-    scrollToBottom()
+    // 等 DOM 更新后再滚动到最新消息（避免 scrollHeight 未更新导致滚动到错误位置）
+    nextTick(() => {
+      if (!userScrolled.value) {
+        scrollToBottom()
+      }
+    })
   } finally {
     sending.value = false
   }
@@ -135,8 +140,8 @@ const streamingMessage = computed(() => {
 
 /**
  * 监听消息变化自动滚动：
- * - 流式输出期间持续滚动（streamingBuffer 有内容时持续触发）
- * - 非流式时，只有用户没有主动滑动才自动滚动
+ * - 只有用户没有主动滑动页面时才自动滚动
+ * - AI 流式输出时用户若滑动查看历史，自动滚动暂停
  *
  * <p>注意：这里用 streamingMessage?.content 做深度监听，因为 streamingBuffer 对象
  * 引用不变但 content 字符串在不断拼接，只有监听 content 才能捕获每次追加。
@@ -144,7 +149,8 @@ const streamingMessage = computed(() => {
 watch(
   () => [messages.value.length, streamingMessage.value?.content] as const,
   () => {
-    if (streamingMessage.value || !userScrolled.value) {
+    // 只有用户没有主动滑动（userScrolled=false）时才自动滚动
+    if (!userScrolled.value) {
       scrollToBottom()
     }
   }

@@ -1,7 +1,7 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
 import type { ChatMessage, ChatRole } from '@/types/chat'
-import { getHistory } from '@/services/chat'
+import { getHistory, clearChatHistory, deleteLastConversationPair } from '@/services/chat'
 import { getItem, setItem, STORAGE_KEYS } from '@/utils/storage'
 
 interface StreamBuffer {
@@ -47,11 +47,16 @@ export const useChatStore = defineStore('chat', () => {
     if (!messages.value[studentId]) {
       messages.value[studentId] = []
     }
-    return messages.value[studentId] as ChatMessage[]
+    // 过滤已删除的消息，只返回未删除的对话
+    return (messages.value[studentId] as ChatMessage[]).filter(m => m.deleted !== true)
   }
 
   function appendMessage(studentId: number, role: ChatRole, content: string, agentType?: string): ChatMessage {
-    const list = getMessages(studentId)
+    // 直接操作原始数组，不过滤
+    if (!messages.value[studentId]) {
+      messages.value[studentId] = []
+    }
+    const list = messages.value[studentId] as ChatMessage[]
     const msg: ChatMessage = {
       studentId,
       role,
@@ -90,17 +95,21 @@ export const useChatStore = defineStore('chat', () => {
   }
 
   /**
-   * 取消正在进行的流式输出：将当前流式内容直接追加为用户消息，
-   * 相当于用户主动中断 AI 回答并发送了新消息。
+   * 取消正在进行的流式输出：删除数据库中可能已写入的未完成对话对
+   * （用户消息 + assistant 消息），保证对话历史的纯净。
    */
-  function cancelStream(): void {
+  async function cancelStream(): Promise<void> {
     if (!streamingBuffer.value) return
-    const buffer = streamingBuffer.value
-    // 把 AI 未完成的回答追加到用户消息（表示用户中断了 AI 并继续提问）
+    const studentId = streamingBuffer.value.studentId
+    // 异步删除后端可能已写入的未完成对话对
+    try {
+      await deleteLastConversationPair(studentId)
+    } catch (e) {
+      console.warn('[ChatStore] 删除未完成对话对失败:', e)
+    }
     streamingBuffer.value = null
     currentAgent.value = null
     isStreamingActive.value = false
-    // 不调用 appendMessage，仅仅是清空流式缓冲
   }
 
   /**
@@ -113,14 +122,16 @@ export const useChatStore = defineStore('chat', () => {
     error.value = null
     try {
       const history = await getHistory(studentId, HISTORY_PAGE_SIZE)
+      // 过滤已删除的消息，只保留未删除的对话
+      const active = history.filter((m: ChatMessage) => m.deleted !== true)
       // 后端按 createdAt 倒序返回（最新在前），UI 期望按时间正序展示（最新在末尾）
-      const sorted = [...history].sort((a, b) => {
+      const sorted = [...active].sort((a, b) => {
         const ta = a.createdAt ? Date.parse(a.createdAt) : 0
         const tb = b.createdAt ? Date.parse(b.createdAt) : 0
         return ta - tb
       })
       messages.value[studentId] = sorted
-      hasMore.value[studentId] = history.length >= HISTORY_PAGE_SIZE
+      hasMore.value[studentId] = active.length >= HISTORY_PAGE_SIZE
       persistMessages()
     } catch (e: unknown) {
       error.value = e instanceof Error ? e.message : '加载历史失败'
@@ -177,10 +188,23 @@ export const useChatStore = defineStore('chat', () => {
     }
   }
 
-  function clearHistory(studentId: number): void {
+  async function clearHistory(studentId: number): Promise<void> {
+    // 清除后端数据库中的对话记录
+    try {
+      await clearChatHistory(studentId)
+    } catch (e) {
+      console.warn('清除后端对话历史失败:', e)
+    }
+    // 清除前端缓存
     messages.value[studentId] = []
     hasMore.value[studentId] = true
     delete loadingMore.value[studentId]
+    // 同时清空流式输出缓冲，避免清空历史后 AI 最后一条回复仍残留
+    if (streamingBuffer.value && streamingBuffer.value.studentId === studentId) {
+      streamingBuffer.value = null
+      isStreamingActive.value = false
+      currentAgent.value = null
+    }
     persistMessages()
   }
 

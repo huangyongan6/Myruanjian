@@ -136,15 +136,13 @@ public class LearningRecordServiceImpl implements LearningRecordService {
                 }
                 default -> { /* 忽略未知 action */ }
             }
-            // 只统计 complete 和 quiz 的学习时长，view 行为通常是瞬时事件不计入
-            if (r.getDuration() != null && (r.getAction().equals("complete") || r.getAction().equals("quiz"))) {
+            // 统计所有有 duration 的行为（view 的 duration 在关闭弹窗时结算，代表实际浏览时长）
+            if (r.getDuration() != null && r.getDuration() > 0) {
                 totalDuration += r.getDuration();
             }
         }
         // 浏览资源量使用去重后的资源数
         report.put("viewCount", viewedResourceIds.size());
-
-        report.put("viewCount", viewCount);
         report.put("completeCount", completeCount);
         report.put("quizCount", quizCount);
         report.put("averageScore", scoredQuizzes == 0 ? null
@@ -160,5 +158,26 @@ public class LearningRecordServiceImpl implements LearningRecordService {
         log.info("学习评估 studentId={} 完成率={} 平均分={}",
                 studentId, completionRate, report.get("averageScore"));
         return report;
+    }
+
+    @Override
+    public int getTodayDuration(Long studentId) {
+        LocalDateTime startOfDay = LocalDateTime.now().toLocalDate().atStartOfDay();
+        LocalDateTime endOfDay = startOfDay.plusDays(1);
+
+        LambdaQueryWrapper<LearningRecord> wrapper = new LambdaQueryWrapper<>();
+        wrapper.eq(LearningRecord::getStudentId, studentId)
+                .ge(LearningRecord::getCreatedAt, startOfDay)
+                .lt(LearningRecord::getCreatedAt, endOfDay);
+        List<LearningRecord> todayRecords = recordMapper.selectList(wrapper);
+
+        int total = 0;
+        for (LearningRecord r : todayRecords) {
+            if (r.getDuration() != null && r.getDuration() > 0) {
+                total += r.getDuration();
+            }
+        }
+        log.debug("当日学习时长 studentId={} duration={} 秒", studentId, total);
+        return total;
     }
 }

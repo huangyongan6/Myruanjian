@@ -31,5 +31,8 @@ public class ChatMessage {
     /** 响应 Agent 类型（可空） */
     private String agentType;
 
+    /** 逻辑删除标记（true = 已删除，不查询） */
+    private Boolean deleted = false;
+
     private LocalDateTime createdAt;
 }

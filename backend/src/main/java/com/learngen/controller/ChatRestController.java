@@ -8,6 +8,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -59,6 +60,19 @@ public class ChatRestController {
                                              @RequestParam(defaultValue = "50") int limit,
                                              @RequestParam(required = false) String before) {
         return Result.success(chatService.history(studentId, limit, before));
+    }
+
+    @DeleteMapping("/history/{studentId}")
+    @Operation(summary = "清除对话历史", description = "删除指定学生的所有对话记录")
+    public Result<Void> clearHistory(@PathVariable Long studentId) {
+        chatService.clearHistory(studentId);
+        return Result.success(null);
+    }
+
+    @DeleteMapping("/last-message/{studentId}")
+    @Operation(summary = "删除最新对话对", description = "删除指定学生最新的对话对（用户+assistant，打断场景）")
+    public Result<Boolean> deleteLastMessage(@PathVariable Long studentId) {
+        return Result.success(chatService.deleteLastConversationPair(studentId));
     }
 
     @Data

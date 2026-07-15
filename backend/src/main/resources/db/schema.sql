@@ -48,6 +48,7 @@ CREATE TABLE chat_message (
     role        VARCHAR(20) NOT NULL COMMENT '角色：user / assistant',
     content     TEXT NOT NULL COMMENT '消息内容',
     agent_type  VARCHAR(50) DEFAULT NULL COMMENT '响应Agent类型',
+    deleted     TINYINT(1) DEFAULT 0 COMMENT '逻辑删除标记：0=未删除，1=已删除',
     created_at  DATETIME DEFAULT CURRENT_TIMESTAMP,
     INDEX idx_student_id (student_id),
     INDEX idx_created_at (created_at),
@@ -122,3 +123,6 @@ CREATE TABLE knowledge_point (
     INDEX idx_module (module),
     INDEX idx_name (name)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='知识点元数据表';
+ALTER TABLE chat_message 
+ADD COLUMN deleted TINYINT(1) DEFAULT 0 COMMENT '逻辑删除标记';
+UPDATE chat_message SET deleted = false;

@@ -1,23 +1,25 @@
 package com.learngen.service.impl;
 
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.learngen.agent.AgentMessage;
 import com.learngen.agent.Orchestrator;
 import com.learngen.mapper.ChatMessageMapper;
 import com.learngen.model.ChatMessage;
 import com.learngen.service.ChatService;
-import com.learngen.service.ProfileService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 
 /**
- * 对话服务实现。
+ * 对话服务实现. 
  *
  * <p>对应 CLAUDE.md §3.3 Orchestrator 意图识别规则：
  * <ul>
@@ -30,8 +32,8 @@ import java.util.function.Consumer;
  *   <li>默认 → doc</li>
  * </ul>
  *
- * <p>同步入口 {@link #handleMessage} 内部委托流式入口 {@link #handleMessageStream}，
- * 保证两条路径行为一致。
+ * <p>同步入口 {@link #handleMessage} 内部委托流式入口 {@link #handleMessageStream}, 
+ * 保证两条路径行为一致. 
  */
 @Slf4j
 @Service
@@ -40,9 +42,14 @@ public class ChatServiceImpl implements ChatService {
 
     private final Orchestrator orchestrator;
     private final ChatMessageMapper chatMessageMapper;
-    private final ProfileService profileService;
 
-    /** 关键词 → agentType 的映射表（CLAUDE.md §3.3）。 */
+    /**
+     * 生成轮次计数器：每次 handleMessageStream 调用时自增. 
+     * 旧轮次推送的 chunk 会被丢弃, 实现"新消息取消旧输出"的效果. 
+     */
+    private final AtomicLong generationCounter = new AtomicLong(0);
+
+    /** 关键词 → agentType 的映射表(CLAUDE.md §3.3).  */
     private static final Map<String, String> INTENT_RULES = Map.ofEntries(
             Map.entry("介绍", "profile"),
             Map.entry("我是", "profile"),
@@ -97,7 +104,7 @@ public class ChatServiceImpl implements ChatService {
 
         if (errorRef.get() != null) {
             Throwable err = errorRef.get();
-            // 同步入口与流式入口一致：异常也以 payload 形式返回（或由 GlobalExceptionHandler 接管）
+            // 同步入口与流式入口一致：异常也以 payload 形式返回(或由 GlobalExceptionHandler 接管)
             // 这里采用保守策略：抛 RuntimeException 让 GlobalExceptionHandler 包装
             if (err instanceof RuntimeException re) {
                 throw re;
@@ -124,9 +131,17 @@ public class ChatServiceImpl implements ChatService {
             return;
         }
 
-        // 包装回调：本方法内部所有回调都做容错，调用方拿到的总是单次回调失败不会传染
+        // 0.5 本次生成的轮次号：旧轮次的 chunk 会被丢弃
+        final long thisGeneration = generationCounter.incrementAndGet();
+
+        // 包装回调：本方法内部所有回调都做容错, 调用方拿到的总是单次回调失败不会传染
         Consumer<String> safeChunk = chunk -> {
             if (chunk == null || chunk.isEmpty()) return;
+            // 检查轮次：若已被新生成取代, 丢弃旧 chunk
+            if (thisGeneration != generationCounter.get()) {
+                log.debug("轮次 {} 已过时, 丢弃 chunk", thisGeneration);
+                return;
+            }
             try {
                 onChunk.accept(chunk);
             } catch (Exception e) {
@@ -134,6 +149,11 @@ public class ChatServiceImpl implements ChatService {
             }
         };
         Consumer<Throwable> safeError = err -> {
+            // 检查轮次：若已被新生成取代, 跳过 error 回调
+            if (thisGeneration != generationCounter.get()) {
+                log.debug("轮次 {} 已过时, 跳过 error 回调", thisGeneration);
+                return;
+            }
             try {
                 onError.accept(err);
             } catch (Exception e) {
@@ -141,6 +161,11 @@ public class ChatServiceImpl implements ChatService {
             }
         };
         Runnable safeDone = () -> {
+            // 检查轮次：若已被新生成取代, 跳过 done 回调(避免旧消息被持久化)
+            if (thisGeneration != generationCounter.get()) {
+                log.debug("轮次 {} 已过时, 跳过 done 回调", thisGeneration);
+                return;
+            }
             try {
                 onDone.run();
             } catch (Exception e) {
@@ -156,11 +181,11 @@ public class ChatServiceImpl implements ChatService {
         try {
             persistMessage(studentId, "user", userInput, null);
         } catch (Exception e) {
-            // 持久化失败也要继续推流（不至于整条消息丢失）
+            // 持久化失败也要继续推流(不至于整条消息丢失)
             log.warn("持久化 user 消息失败 studentId={} err={}", studentId, e.getMessage());
         }
 
-        // 3. 用 StringBuffer 累积 chunk（线程安全，onDone 时一次性落库）
+        // 3. 用 StringBuffer 累积 chunk(线程安全, onDone 时一次性落库)
         StringBuffer payloadBuffer = new StringBuffer();
 
         // 4. 流式分发
@@ -185,7 +210,7 @@ public class ChatServiceImpl implements ChatService {
                     safeDone.run();
                 },
                 err -> {
-                    // 流异常结束：仍写一条 assistant 行（payload = 错误摘要），保证历史完整
+                    // 流异常结束：仍写一条 assistant 行(payload = 错误摘要), 保证历史完整
                     String errorPayload = "[错误] " + (err == null ? "未知异常" : err.getMessage());
                     try {
                         persistMessage(studentId, "assistant", errorPayload, agentType);
@@ -198,8 +223,8 @@ public class ChatServiceImpl implements ChatService {
     }
 
     /**
-     * 简单的关键词匹配意图识别。
-     * 第一版：遍历规则表，命中即返回；未命中默认 doc。
+     * 简单的关键词匹配意图识别. 
+     * 第一版：遍历规则表, 命中即返回；未命中默认 doc. 
      */
     String recognizeIntent(String input) {
         for (Map.Entry<String, String> entry : INTENT_RULES.entrySet()) {
@@ -235,10 +260,46 @@ public class ChatServiceImpl implements ChatService {
                 java.time.LocalDateTime cursor = java.time.LocalDateTime.parse(before);
                 wrapper.lt(ChatMessage::getCreatedAt, cursor);
             } catch (java.time.format.DateTimeParseException ex) {
-                // before 格式不合法时按“取最新”处理，避免抛出 500
+                // before 格式不合法时按"取最新"处理, 避免抛出 500
                 log.warn("history: invalid before cursor '{}', fallback to latest", before);
             }
         }
         return chatMessageMapper.selectList(wrapper);
+    }
+
+    @Override
+    public void clearHistory(Long studentId) {
+        // 清除对话：前端操作，不改变数据库中的 deleted 状态
+        // 被打断的对话由 deleteLastAssistantMessage 标记 deleted=true
+        // 未被打断的对话 deleted=false，加载历史时可以恢复显示
+        log.info("清除对话历史(仅前端隐藏，不改变deleted状态) studentId={}", studentId);
+    }
+
+    @Override
+    public boolean deleteLastConversationPair(Long studentId) {
+        // 逻辑删除：删除最后一对对话（用户消息 + assistant 消息）
+        LambdaQueryWrapper<ChatMessage> wrapper = new LambdaQueryWrapper<>();
+        wrapper.eq(ChatMessage::getStudentId, studentId)
+                .eq(ChatMessage::getDeleted, false)
+                .orderByDesc(ChatMessage::getCreatedAt)
+                .last("LIMIT 2");
+        List<ChatMessage> lastTwo = chatMessageMapper.selectList(wrapper);
+        if (lastTwo.size() == 2) {
+            // 应该是最新的一条用户消息 + 一条 assistant 消息
+            for (ChatMessage msg : lastTwo) {
+                msg.setDeleted(true);
+                chatMessageMapper.updateById(msg);
+            }
+            log.info("删除未完成对话对(逻辑删除) studentId={} messageIds={},{}",
+                    studentId, lastTwo.get(0).getId(), lastTwo.get(1).getId());
+            return true;
+        } else if (lastTwo.size() == 1) {
+            // 只有一条消息，也删除
+            lastTwo.get(0).setDeleted(true);
+            chatMessageMapper.updateById(lastTwo.get(0));
+            log.info("删除未完成对话(逻辑删除) studentId={} messageId={}", studentId, lastTwo.get(0).getId());
+            return true;
+        }
+        return false;
     }
 }

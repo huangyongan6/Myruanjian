@@ -5,28 +5,33 @@ import ProfileRadar from '@/components/ProfileRadar/ProfileRadar.vue'
 import { useProfileStore } from '@/stores/profile'
 import { useStudentStore } from '@/stores/student'
 import { useChatStore } from '@/stores/chat'
+import { usePathStore } from '@/stores/path'
 import { formatDateTime } from '@/utils/format'
 import type { KnowledgeBase, CognitiveStyle, LearningGoal, WeakPoints, LearningPace, InterestArea } from '@/types/profile'
 
 const profileStore = useProfileStore()
 const studentStore = useStudentStore()
 const chatStore = useChatStore()
+const pathStore = usePathStore()
 
 const studentId = computed(() => studentStore.currentStudentId)
 
 /**
- * 知识基础：将数值映射为中文档位，避免直接展示 1~5 之类的生硬数字。
+ * 知识基础：将数值映射为中文档位（与 PromptTemplates 中 1-5 量纲一致）。
+ * 1=薄弱，2=了解/基础，3=入门/中等，4=熟练/较好，5=精通/扎实。
  */
 function mathLevelLabel(value?: number): string {
   if (value === undefined || value === null) return '未知'
-  if (value >= 4) return '较好（高中/竞赛水平）'
-  if (value >= 3) return '中等（初中水平）'
-  if (value >= 2) return '基础（小学水平）'
+  if (value >= 5) return '精通（竞赛水平）'
+  if (value >= 4) return '较好（高中水平）'
+  if (value >= 3) return '入门（初中水平）'
+  if (value >= 2) return '了解（小学水平）'
   if (value >= 1) return '薄弱'
   return '未知'
 }
 function programmingLevelLabel(value?: number): string {
   if (value === undefined || value === null) return '未知'
+  if (value >= 5) return '精通（可架构设计）'
   if (value >= 4) return '熟练（可独立完成项目）'
   if (value >= 3) return '入门（掌握基础语法）'
   if (value >= 2) return '了解（写过简单代码）'
@@ -35,23 +40,25 @@ function programmingLevelLabel(value?: number): string {
 }
 function mlFamiliarityLabel(value?: number): string {
   if (value === undefined || value === null) return '未知'
+  if (value >= 5) return '精通（掌握原理与源码）'
   if (value >= 4) return '熟悉（了解常见模型原理）'
   if (value >= 3) return '入门（知道概念与基本流程）'
-  if (value >= 2) return '了解（听过名词）'
+  if (value >= 2) return '了解（听过专有名词）'
   if (value >= 1) return '零基础'
   return '未知'
 }
 
 /**
- * 认知风格：把数值转换成倾向描述。
+ * 认知风格：把 0.0-1.0 的数值转换成倾向描述。
+ * 阈值：>=0.7 强偏好，>=0.5 较偏好，>=0.3 一般，>=0.15 较弱。
  */
 function tendencyLabel(value?: number): string {
   if (value === undefined || value === null) return '未知'
-  if (value >= 4) return '强偏好'
-  if (value >= 3) return '较偏好'
-  if (value >= 2) return '一般'
-  if (value >= 1) return '较弱'
-  return '未知'
+  if (value >= 0.7) return '强偏好'
+  if (value >= 0.5) return '较偏好'
+  if (value >= 0.3) return '一般'
+  if (value >= 0.15) return '较弱'
+  return '低'
 }
 
 /**
@@ -99,20 +106,36 @@ async function loadProfile(): Promise<void> {
     ElMessage.warning('请先在对话页选择学生')
     return
   }
-  await profileStore.fetchProfile(studentId.value)
+  await Promise.all([
+    profileStore.fetchProfile(studentId.value),
+    pathStore.fetchLatest(studentId.value)
+  ])
+  // 如果画像不存在，基于学习数据自动生成
+  if (!profileStore.profile) {
+    await autoGenerateProfile()
+  }
+}
+
+async function autoGenerateProfile(): Promise<void> {
+  if (studentId.value === null) return
+  // 获取对话历史（可选）
+  const list = chatStore.getMessages(studentId.value)
+  const content = list.length > 0
+    ? list.slice(-20).map((m) => `${m.role === 'user' ? '学生' : 'AI'}：${m.content}`).join('\n')
+    : ''
+  try {
+    await profileStore.generate(studentId.value, content)
+  } catch {
+    // 生成失败不阻塞页面加载
+  }
 }
 
 async function regenerate(): Promise<void> {
   if (studentId.value === null) return
   const list = chatStore.getMessages(studentId.value)
-  if (list.length === 0) {
-    ElMessage.warning('请先与 AI 助手对话，以提供画像抽取素材')
-    return
-  }
-  const content = list
-    .slice(-20)
-    .map((m) => `${m.role === 'user' ? '学生' : 'AI'}：${m.content}`)
-    .join('\n')
+  const content = list.length > 0
+    ? list.slice(-20).map((m) => `${m.role === 'user' ? '学生' : 'AI'}：${m.content}`).join('\n')
+    : ''
   await profileStore.generate(studentId.value, content)
   ElMessage.success('画像已更新')
 }
@@ -143,6 +166,32 @@ onMounted(loadProfile)
           </div>
         </template>
         <ProfileRadar :profile="profileStore.profile" />
+      </el-card>
+
+      <!-- 学习路线总览 -->
+      <el-card v-if="pathStore.currentPath" class="profile-page__path-card" shadow="never">
+        <template #header>
+          <div class="profile-page__card-header">
+            <span>🗺️ 学习路线进度</span>
+            <el-tag :type="pathStore.progressPercent >= 100 ? 'success' : 'primary'" size="small">
+              {{ pathStore.progressPercent }}%
+            </el-tag>
+          </div>
+        </template>
+        <div class="profile-page__path-info">
+          <div class="profile-page__path-item">
+            <span class="profile-page__path-label">当前进度</span>
+            <span class="profile-page__path-value">
+              第 {{ pathStore.currentStepIndex }} / {{ pathStore.currentPath.totalSteps }} 步
+            </span>
+          </div>
+          <el-progress
+            :percentage="pathStore.progressPercent"
+            :status="pathStore.progressPercent >= 100 ? 'success' : ''"
+            :stroke-width="10"
+            class="profile-page__progress"
+          />
+        </div>
       </el-card>
 
       <el-row :gutter="16" class="profile-page__details">
@@ -282,6 +331,30 @@ onMounted(loadProfile)
   }
   &__radar-card {
     margin-bottom: $spacing-md;
+  }
+  &__path-card {
+    margin-bottom: $spacing-md;
+  }
+  &__path-info {
+    padding: $spacing-xs 0;
+  }
+  &__path-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: $spacing-sm;
+  }
+  &__path-label {
+    color: $text-secondary;
+    font-size: 13px;
+  }
+  &__path-value {
+    color: $text-primary;
+    font-size: 14px;
+    font-weight: 500;
+  }
+  &__progress {
+    margin-top: $spacing-sm;
   }
   &__card-header {
     display: flex;

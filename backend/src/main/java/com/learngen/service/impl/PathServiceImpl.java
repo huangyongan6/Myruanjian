@@ -13,6 +13,7 @@ import com.learngen.service.KnowledgeBaseService;
 import com.learngen.service.LearningRecordService;
 import com.learngen.service.PathService;
 import com.learngen.service.ProfileService;
+import org.springframework.context.annotation.Lazy;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -41,6 +42,7 @@ public class PathServiceImpl implements PathService {
 
     private final Orchestrator orchestrator;
     private final LearningPathMapper pathMapper;
+    @Lazy
     private final ProfileService profileService;
     private final KnowledgeBaseService knowledgeBaseService;
     private final LearningRecordService recordService;

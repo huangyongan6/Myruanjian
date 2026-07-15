@@ -36,4 +36,12 @@ public interface LearningRecordService {
      * @return 报告 Map（key 为指标名，value 为数值或字符串）
      */
     Map<String, Object> evaluate(Long studentId);
+
+    /**
+     * 获取当天累计学习时长（秒）。
+     *
+     * @param studentId 学生 ID
+     * @return 当天学习时长（秒），无记录时返回 0
+     */
+    int getTodayDuration(Long studentId);
 }

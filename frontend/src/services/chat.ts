@@ -25,3 +25,23 @@ export function getHistory(studentId: number, limit = 50, before?: string): Prom
     params: { limit, before }
   })
 }
+
+/**
+ * 清除对话历史。
+ */
+export function clearChatHistory(studentId: number): Promise<void> {
+  return request<void>({
+    url: `/chat/history/${studentId}`,
+    method: 'DELETE'
+  })
+}
+
+/**
+ * 删除最新的对话对（打断场景）：用户消息 + assistant 消息。
+ */
+export function deleteLastConversationPair(studentId: number): Promise<boolean> {
+  return request<boolean>({
+    url: `/chat/last-message/${studentId}`,
+    method: 'DELETE'
+  })
+}

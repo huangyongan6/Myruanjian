@@ -12,6 +12,8 @@ export interface ChatMessage {
   role: ChatRole
   content: string
   agentType?: string
+  /** 逻辑删除标记，true = 已删除（被打断的对话） */
+  deleted?: boolean
   createdAt?: string
 }
 
