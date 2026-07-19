@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, nextTick, watch } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
+import IconSvg from '@/components/IconSvg/IconSvg.vue'
 import ChatMessage from '@/components/ChatMessage/ChatMessage.vue'
 import { useChat } from '@/composables/useChat'
 import { useStudentStore } from '@/stores/student'
@@ -166,9 +167,6 @@ onMounted(() => {
 
 <template>
   <div class="page-container chat-page">
-    <h2 class="page-title">对话学习</h2>
-    <p class="page-subtitle">与 AI 助手对话，逐步构建你的学习画像，并触发个性化资源生成。</p>
-
     <div class="chat-page__toolbar">
       <el-tag v-if="connected" type="success" effect="plain">● 已连接</el-tag>
       <el-tag v-else-if="reconnecting" type="warning" effect="plain">● 重连中...</el-tag>
@@ -181,7 +179,7 @@ onMounted(() => {
 
     <div ref="scrollRef" class="chat-page__messages" @scroll="onScroll">
       <div v-if="messages.length === 0 && !streamingMessage" class="empty-tip">
-        👋 欢迎，{{ currentStudent?.name ?? '同学' }}！<br />
+        <IconSvg name="wave" :size="20" /> 欢迎，{{ currentStudent?.name ?? '同学' }}！<br />
         告诉我你的学习背景、目标与困惑，我会为你推荐个性化资源。
       </div>
 
@@ -286,15 +284,17 @@ onMounted(() => {
     display: flex;
     flex-direction: column;
     gap: $spacing-sm;
-    border: 1px solid transparent;
-    transition: border-color 0.25s ease;
+    border: 1.5px solid rgba(0, 0, 0, 0.15);
+    transition: border-color 0.25s ease, box-shadow 0.25s ease;
 
     &:focus-within {
-      border-color: rgba(0, 0, 0, 0.12);
+      border-color: var(--el-color-primary, #409eff);
+      box-shadow: 0 0 0 3px rgba(64, 158, 255, 0.15);
     }
 
     :deep(.el-textarea__inner) {
-      border: none;
+      border: none !important;
+      box-shadow: none !important;
       padding: 0;
       font-size: 15px;
       line-height: 1;
@@ -308,7 +308,7 @@ onMounted(() => {
 
       &:focus {
         outline: none;
-        box-shadow: none;
+        box-shadow: none !important;
       }
     }
   }

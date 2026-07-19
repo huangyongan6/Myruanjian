@@ -2,6 +2,7 @@
 import { ref, computed, onMounted, watch } from 'vue'
 import { ElMessage } from 'element-plus'
 import { useRouter } from 'vue-router'
+import IconSvg from '@/components/IconSvg/IconSvg.vue'
 import PathTimeline from '@/components/PathTimeline/PathTimeline.vue'
 import RecommendPanel from '@/components/RecommendPanel/RecommendPanel.vue'
 import { usePathStore } from '@/stores/path'
@@ -49,7 +50,7 @@ async function loadRecommend(): Promise<void> {
   if (studentId.value === null) return
   loadingRecommend.value = true
   try {
-    const real = await recommendResources(studentId.value, 8)
+    const real = await recommendResources(studentId.value, 6)
     if (real.length > 0) {
       recommendations.value = real
       return
@@ -58,14 +59,14 @@ async function loadRecommend(): Promise<void> {
     recommendations.value = mockRecommend(
       studentId.value,
       currentStepPoint.value,
-      8
+      6
     ) as RecommendedResource[]
   } catch {
     // 真实接口失败：同样 fallback 到 mock
     recommendations.value = mockRecommend(
       studentId.value,
       currentStepPoint.value,
-      8
+      6
     ) as RecommendedResource[]
   } finally {
     loadingRecommend.value = false
@@ -100,14 +101,11 @@ onMounted(loadAll)
 
 <template>
   <div class="page-container learning-path">
-    <h2 class="page-title">学习路径</h2>
-    <p class="page-subtitle">基于你的学习画像与历史记录，AI 智能规划的学习步骤序列。</p>
-
     <div class="learning-path__actions">
       <el-button type="primary" :loading="pathStore.loading" @click="generate">
-        🧭 重新规划学习路径
+        <IconSvg name="compass" :size="16" /> 重新规划学习路径
       </el-button>
-      <el-button @click="loadRecommend">🔄 刷新推荐</el-button>
+      <el-button @click="loadRecommend"><IconSvg name="refresh" :size="16" /> 刷新推荐</el-button>
     </div>
 
     <el-card v-if="pathStore.currentPath" class="learning-path__progress" shadow="never">
@@ -123,7 +121,7 @@ onMounted(loadAll)
 
     <el-row :gutter="16">
       <el-col :xs="24" :md="16">
-        <h3 class="learning-path__section-title">📍 学习步骤</h3>
+        <h3 class="learning-path__section-title"><IconSvg name="location" :size="16" /> 学习步骤</h3>
         <PathTimeline
           :steps="pathStore.steps"
           :current-index="pathStore.currentStepIndex"
@@ -131,7 +129,7 @@ onMounted(loadAll)
         />
       </el-col>
       <el-col :xs="24" :md="8">
-        <h3 class="learning-path__section-title">🎯 推荐资源</h3>
+        <h3 class="learning-path__section-title"><IconSvg name="target" :size="16" /> 推荐资源</h3>
         <div v-if="loadingRecommend" class="empty-tip">加载中...</div>
         <RecommendPanel
           v-else

@@ -25,6 +25,16 @@ const activePath = computed(() => route.path)
 const currentTitle = computed(
   () => navItems.find((item) => item.path === route.path)?.title ?? '智能学习助手'
 )
+const currentSubtitle = computed(() => {
+  const subtitles: Record<string, string> = {
+    '/chat': '与 AI 助手对话，逐步构建你的学习画像，并触发个性化资源生成。',
+    '/profile': '基于对话内容自动抽取的 6 维学习画像。可视化展示能力分布与学习偏好。',
+    '/resources': '5 种个性化学习资源：课程讲解 / 思维导图 / 练习题库 / 拓展阅读 / 代码实操。',
+    '/path': '基于你的学习画像与历史记录，AI 智能规划的学习步骤序列。',
+    '/dashboard': '学习行为统计与效果评估。用户进行浏览 / 完成 / 答题后，本页实时刷新。'
+  }
+  return subtitles[route.path] ?? ''
+})
 const isWelcomePage = computed(() => route.name === 'Welcome')
 
 function navigate(path: string): void {
@@ -59,7 +69,10 @@ function navigate(path: string): void {
 
       <el-container>
         <el-header class="app-header">
-          <span class="app-header__title">{{ currentTitle }}</span>
+          <div class="app-header__left">
+            <span class="app-header__title">{{ currentTitle }}</span>
+            <span v-if="currentSubtitle" class="app-header__subtitle">{{ currentSubtitle }}</span>
+          </div>
           <div class="app-header__right">
             <span v-if="studentStore.currentStudent" class="app-header__student">
               当前学生：{{ studentStore.currentStudent.name }} (ID: {{ studentStore.currentStudent.id }})
@@ -129,10 +142,23 @@ function navigate(path: string): void {
   padding: 0 $spacing-lg;
   height: $header-height;
 
+  &__left {
+    display: flex;
+    align-items: center;
+    gap: $spacing-md;
+  }
+
   &__title {
     font-size: 16px;
     font-weight: 600;
     color: $text-primary;
+  }
+
+  &__subtitle {
+    font-size: 13px;
+    color: $text-secondary;
+    border-left: 1px solid $border-light;
+    padding-left: $spacing-md;
   }
 
   &__right {

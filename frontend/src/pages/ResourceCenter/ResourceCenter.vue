@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
+import IconSvg from '@/components/IconSvg/IconSvg.vue'
 import ResourceCard from '@/components/ResourceCard/ResourceCard.vue'
 import ProgressTracker from '@/components/ProgressTracker/ProgressTracker.vue'
 import { useStudentStore } from '@/stores/student'
@@ -168,9 +169,6 @@ onMounted(reload)
 
 <template>
   <div class="page-container resource-center">
-    <h2 class="page-title">资源中心</h2>
-    <p class="page-subtitle">5 种个性化学习资源：课程讲解 / 思维导图 / 练习题库 / 拓展阅读 / 代码实操。</p>
-
     <div class="resource-center__toolbar">
       <el-radio-group v-model="filterType" @change="reload">
         <el-radio-button v-for="f in typeFilters" :key="f.value" :value="f.value">
@@ -201,7 +199,7 @@ onMounted(reload)
             <span class="resource-center__date">{{ r.createdAt?.slice(0, 10) }}</span>
           </div>
           <h4 class="resource-center__title">{{ r.title || getResourceTypeLabel(r.type) }}</h4>
-          <p v-if="r.knowledgePoint" class="resource-center__point">📘 {{ r.knowledgePoint }}</p>
+          <p v-if="r.knowledgePoint" class="resource-center__point"><IconSvg name="tag" :size="14" /> {{ r.knowledgePoint }}</p>
           <el-button class="resource-center__open" size="small" type="primary" plain @click="viewDetail(r)">
             查看详情
           </el-button>

@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import IconSvg from '@/components/IconSvg/IconSvg.vue'
 import type { PathStep } from '@/types/path'
 
 interface Props {
@@ -40,13 +41,13 @@ function stepTimestamp(index: number): string {
           <p v-if="step.description" class="path-timeline__desc">{{ step.description }}</p>
           <div class="path-timeline__meta">
             <el-tag v-if="step.knowledgePoint" size="small" type="info" effect="plain">
-              📘 {{ step.knowledgePoint }}
+              <IconSvg name="tag" :size="12" /> {{ step.knowledgePoint }}
             </el-tag>
             <el-tag v-if="step.estimatedMinutes" size="small" type="warning" effect="plain">
-              ⏱ 约 {{ step.estimatedMinutes }} 分钟
+              <IconSvg name="clock" :size="12" /> 约 {{ step.estimatedMinutes }} 分钟
             </el-tag>
             <el-tag v-if="step.resourceType" size="small" effect="plain">
-              📦 {{ step.resourceType }}
+              <IconSvg name="box" :size="12" /> {{ step.resourceType }}
             </el-tag>
           </div>
           <div class="path-timeline__actions">

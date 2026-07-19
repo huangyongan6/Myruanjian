@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import MarkdownRenderer from '@/components/MarkdownRenderer/MarkdownRenderer.vue'
+import IconSvg from '@/components/IconSvg/IconSvg.vue'
 import MindMapView from '@/components/MindMapView/MindMapView.vue'
 import QuizCard from '@/components/QuizCard/QuizCard.vue'
 import CodeViewer from '@/components/CodeViewer/CodeViewer.vue'
@@ -62,8 +63,8 @@ const readingRawItems = computed<ReadingItem[]>(() => {
         </el-tag>
       </div>
       <div class="resource-card__meta">
-        <span v-if="resource.knowledgePoint">📘 {{ resource.knowledgePoint }}</span>
-        <span>🕒 {{ formatDateTime(resource.createdAt) }}</span>
+        <span v-if="resource.knowledgePoint"><IconSvg name="tag" :size="14" /> {{ resource.knowledgePoint }}</span>
+        <span><IconSvg name="clock" :size="14" /> {{ formatDateTime(resource.createdAt) }}</span>
       </div>
     </div>
 
@@ -98,8 +99,8 @@ const readingRawItems = computed<ReadingItem[]>(() => {
               {{ getDifficultyLabel(item.difficulty) }}
             </el-tag>
           </div>
-          <div v-if="item.type" class="resource-card__reading-type">📂 {{ item.type }}</div>
-          <div v-if="item.reason" class="resource-card__reading-reason">💡 {{ item.reason }}</div>
+          <div v-if="item.type" class="resource-card__reading-type"><IconSvg name="folder" :size="14" /> {{ item.type }}</div>
+          <div v-if="item.reason" class="resource-card__reading-reason"><IconSvg name="idea" :size="14" /> {{ item.reason }}</div>
           <a v-if="item.url" :href="item.url" target="_blank" rel="noopener" class="resource-card__reading-link">
             查看原文 →
           </a>

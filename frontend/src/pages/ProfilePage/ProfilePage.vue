@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
+import IconSvg from '@/components/IconSvg/IconSvg.vue'
 import ProfileRadar from '@/components/ProfileRadar/ProfileRadar.vue'
 import { useProfileStore } from '@/stores/profile'
 import { useStudentStore } from '@/stores/student'
@@ -145,12 +146,9 @@ onMounted(loadProfile)
 
 <template>
   <div class="page-container profile-page">
-    <h2 class="page-title">学习画像</h2>
-    <p class="page-subtitle">基于对话内容自动抽取的 6 维学习画像。可视化展示能力分布与学习偏好。</p>
-
     <div class="profile-page__actions">
       <el-button :loading="profileStore.loading" type="primary" @click="regenerate">
-        🔄 基于对话重新生成画像
+        <IconSvg name="refresh" :size="16" /> 基于对话重新生成画像
       </el-button>
     </div>
 
@@ -161,7 +159,7 @@ onMounted(loadProfile)
       <el-card class="profile-page__radar-card" shadow="never">
         <template #header>
           <div class="profile-page__card-header">
-            <span>📊 6 维能力雷达</span>
+            <span><IconSvg name="chart" :size="16" /> 6 维能力雷达</span>
             <span class="profile-page__updated">更新于 {{ formatDateTime(profileStore.profile?.updatedAt) }}</span>
           </div>
         </template>
@@ -172,7 +170,7 @@ onMounted(loadProfile)
       <el-card v-if="pathStore.currentPath" class="profile-page__path-card" shadow="never">
         <template #header>
           <div class="profile-page__card-header">
-            <span>🗺️ 学习路线进度</span>
+            <span><IconSvg name="compass" :size="16" /> 学习路线进度</span>
             <el-tag :type="pathStore.progressPercent >= 100 ? 'success' : 'primary'" size="small">
               {{ pathStore.progressPercent }}%
             </el-tag>
@@ -198,7 +196,7 @@ onMounted(loadProfile)
         <!-- 📚 知识基础 -->
         <el-col :xs="24" :md="12">
           <el-card shadow="never">
-            <template #header><span>📚 知识基础</span></template>
+            <template #header><span><IconSvg name="book" :size="16" /> 知识基础</span></template>
             <ul class="profile-page__list">
               <li class="profile-page__item">
                 <span class="profile-page__label">数学水平</span>
@@ -219,7 +217,7 @@ onMounted(loadProfile)
         <!-- 🧠 认知风格 -->
         <el-col :xs="24" :md="12">
           <el-card shadow="never">
-            <template #header><span>🧠 认知风格</span></template>
+            <template #header><span><IconSvg name="brain" :size="16" /> 认知风格</span></template>
             <ul class="profile-page__list">
               <li class="profile-page__item">
                 <span class="profile-page__label">视觉型</span>
@@ -239,8 +237,8 @@ onMounted(loadProfile)
 
         <!-- 🎯 学习目标 -->
         <el-col :xs="24" :md="12">
-          <el-card shadow="never">
-            <template #header><span>🎯 学习目标</span></template>
+          <el-card shadow="never" class="profile-page__card--equal-height">
+            <template #header><span><IconSvg name="target" :size="16" /> 学习目标</span></template>
             <ul class="profile-page__list">
               <li class="profile-page__item">
                 <span class="profile-page__label">目标类型</span>
@@ -256,8 +254,8 @@ onMounted(loadProfile)
 
         <!-- ⚠️ 易错点 -->
         <el-col :xs="24" :md="12">
-          <el-card shadow="never">
-            <template #header><span>⚠️ 易错点</span></template>
+          <el-card shadow="never" class="profile-page__card--equal-height">
+            <template #header><span><IconSvg name="warning" :size="16" /> 易错点</span></template>
             <div class="profile-page__section">
               <div class="profile-page__sub-label">薄弱知识点</div>
               <div v-if="safeArray(weakPoints.weak_topics).length === 0" class="profile-page__empty">暂无</div>
@@ -281,8 +279,8 @@ onMounted(loadProfile)
 
         <!-- ⏱ 学习节奏 -->
         <el-col :xs="24" :md="12">
-          <el-card shadow="never">
-            <template #header><span>⏱ 学习节奏</span></template>
+          <el-card shadow="never" class="profile-page__card--equal-height">
+            <template #header><span><IconSvg name="clock" :size="16" /> 学习节奏</span></template>
             <ul class="profile-page__list">
               <li class="profile-page__item">
                 <span class="profile-page__label">每日学习时长</span>
@@ -300,8 +298,8 @@ onMounted(loadProfile)
 
         <!-- 💡 兴趣方向 -->
         <el-col :xs="24" :md="12">
-          <el-card shadow="never">
-            <template #header><span>💡 兴趣方向</span></template>
+          <el-card shadow="never" class="profile-page__card--equal-height">
+            <template #header><span><IconSvg name="idea" :size="16" /> 兴趣方向</span></template>
             <div class="profile-page__section">
               <div class="profile-page__sub-label">兴趣领域</div>
               <div v-if="safeArray(interestArea.areas).length === 0" class="profile-page__empty">暂无</div>
@@ -367,6 +365,14 @@ onMounted(loadProfile)
   }
   &__details {
     margin-top: 0;
+  }
+
+  /* 同行卡片等高 */
+  &__card--equal-height {
+    height: 100%;
+    :deep(.el-card__body) {
+      min-height: 100px;
+    }
   }
 
   /* 字段-值列表（左右两列对齐） */

@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import MarkdownRenderer from '@/components/MarkdownRenderer/MarkdownRenderer.vue'
+import IconSvg from '@/components/IconSvg/IconSvg.vue'
 import type { ChatMessage } from '@/types/chat'
 
 interface Props {
@@ -12,10 +13,10 @@ const props = withDefaults(defineProps<Props>(), { streaming: false })
 const isUser = (): boolean => props.message.role === 'user'
 const isAssistant = (): boolean => props.message.role === 'assistant'
 
-function getAvatar(): string {
-  if (isUser()) return '👤'
-  if (isAssistant()) return '🤖'
-  return '💡'
+function getAvatarIcon(): string {
+  if (isUser()) return 'user'
+  if (isAssistant()) return 'robot'
+  return 'idea'
 }
 
 function getName(): string {
@@ -27,7 +28,9 @@ function getName(): string {
 
 <template>
   <div class="chat-message" :class="{ 'chat-message--user': isUser(), 'chat-message--assistant': isAssistant() }">
-    <div class="chat-message__avatar">{{ getAvatar() }}</div>
+    <div class="chat-message__avatar">
+      <IconSvg :name="getAvatarIcon()" :size="20" />
+    </div>
     <div class="chat-message__body">
       <div class="chat-message__meta">
         <span class="chat-message__name">{{ getName() }}</span>
@@ -80,8 +83,8 @@ function getName(): string {
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 18px;
     flex-shrink: 0;
+    color: $text-secondary;
   }
   &__body {
     display: flex;

@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
+import IconSvg from '@/components/IconSvg/IconSvg.vue'
 import type { RecommendedResource } from '@/types/recommend'
 import type { LearningResource } from '@/types/resource'
 import ResourceCard from '@/components/ResourceCard/ResourceCard.vue'
@@ -129,14 +130,14 @@ function onQuizSubmitted(percent: number): void {
               {{ getDifficultyLabel(item.resource.difficulty) }}
             </el-tag>
             <el-tag v-if="item.isCurrentMatch" size="small" type="warning" effect="dark">
-              📍 当前步骤
+              <IconSvg name="location" :size="12" /> 当前步骤
             </el-tag>
           </div>
           <div v-if="item.resource.knowledgePoint" class="recommend-panel__point">
-            📘 {{ item.resource.knowledgePoint }}
+            <IconSvg name="tag" :size="14" /> {{ item.resource.knowledgePoint }}
           </div>
           <div v-if="item.raw.reason" class="recommend-panel__reason">
-            💡 {{ item.raw.reason }}
+            <IconSvg name="idea" :size="14" /> {{ item.raw.reason }}
           </div>
         </div>
         <div class="recommend-panel__head-right">
@@ -174,10 +175,11 @@ function onQuizSubmitted(percent: number): void {
 .recommend-panel {
   display: flex;
   flex-direction: column;
-  gap: $spacing-sm;
+  gap: 6px;
 
   &__item {
     transition: transform 0.2s;
+    outline: none !important;
     &:hover { transform: translateY(-2px); }
   }
 
@@ -190,8 +192,9 @@ function onQuizSubmitted(percent: number): void {
     display: flex;
     justify-content: space-between;
     align-items: flex-start;
-    gap: $spacing-sm;
+    gap: $spacing-xs;
     cursor: pointer;
+    padding-bottom: 6px;
   }
 
   &__head-left {
@@ -203,29 +206,30 @@ function onQuizSubmitted(percent: number): void {
     display: flex;
     flex-direction: column;
     align-items: flex-end;
-    gap: 4px;
+    gap: 2px;
     flex-shrink: 0;
   }
 
   &__title {
     display: flex;
     align-items: center;
-    gap: $spacing-sm;
+    gap: 6px;
     font-weight: 600;
     flex-wrap: wrap;
+    font-size: 13px;
   }
 
   &__point,
   &__reason {
-    font-size: 13px;
+    font-size: 12px;
     color: $text-secondary;
-    margin-top: 4px;
+    margin-top: 2px;
   }
   &__reason { color: $primary-color; }
 
   &__content {
-    margin-top: $spacing-md;
-    padding-top: $spacing-md;
+    margin-top: $spacing-sm;
+    padding-top: $spacing-sm;
     border-top: 1px dashed $border-lighter;
   }
 }

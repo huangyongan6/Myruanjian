@@ -2166,7 +2166,7 @@ export function mockRecommend(
   return slice.map((r) => {
     const isHit = point && r.knowledgePoint && r.knowledgePoint.includes(point)
     const reason = isHit
-      ? `📍 与当前步骤知识点「${r.knowledgePoint}」匹配`
+      ? `[匹配] 与当前步骤知识点「${r.knowledgePoint}」相关`
       : `补充学习资源：${r.knowledgePoint ?? r.title}`
     return { resource: r, reason }
   })

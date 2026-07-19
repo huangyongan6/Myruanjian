@@ -2,6 +2,7 @@
 import { ref, onMounted, onBeforeUnmount, computed, watch } from 'vue'
 import * as echarts from 'echarts'
 import { ElMessage } from 'element-plus'
+import IconSvg from '@/components/IconSvg/IconSvg.vue'
 import { useStudentStore } from '@/stores/student'
 import { listRecords, evaluateStudent } from '@/services/record'
 import { useWebSocket } from '@/composables/useWebSocket'
@@ -421,10 +422,6 @@ const lastUpdatedText = computed(() => {
 <template>
   <div class="page-container dashboard">
     <div class="dashboard__header">
-      <div class="dashboard__header-text">
-        <h2 class="page-title">学习仪表盘</h2>
-        <p class="page-subtitle">学习行为统计与效果评估。用户进行浏览 / 完成 / 答题后，本页实时刷新。</p>
-      </div>
       <div class="dashboard__live" :class="{ 'dashboard__live--on': ws.connected.value, 'dashboard__live--busy': refreshing }">
         <span class="dashboard__live-dot" />
         <span class="dashboard__live-text">
@@ -477,8 +474,7 @@ const lastUpdatedText = computed(() => {
     <el-card v-if="report" shadow="never" class="dashboard__report">
       <template #header>
         <div class="dashboard__report-header">
-          <span>📋 学习效果评估报告</span>
-          <el-tag size="small" type="info">数据来源：学习行为埋点</el-tag>
+          <IconSvg name="clipboard" :size="16" /> 学习效果评估报告
         </div>
       </template>
 
@@ -617,36 +613,35 @@ const lastUpdatedText = computed(() => {
     height: 300px;
   }
   &__report {
-    margin-top: $spacing-md;
+    margin-top: -20px;
   }
   &__report-header {
     display: flex;
     align-items: center;
-    justify-content: space-between;
     gap: $spacing-sm;
   }
   &__report-section {
-    margin-top: $spacing-md;
+    margin-top: $spacing-sm;
     &:first-of-type {
       margin-top: 0;
     }
   }
   &__report-title {
-    margin: 0 0 $spacing-sm;
-    font-size: 14px;
+    margin: 0 0 6px;
+    font-size: 13px;
     font-weight: 600;
     color: $text-primary;
   }
   &__report-text {
     margin: 0;
-    line-height: 1.7;
+    line-height: 1.6;
     color: $text-regular;
     font-size: 13px;
   }
   &__report-stats {
-    margin-top: $spacing-md;
-    margin-bottom: $spacing-md;
-    padding: $spacing-md;
+    margin-top: $spacing-sm;
+    margin-bottom: $spacing-sm;
+    padding: $spacing-sm;
     background: $border-extra-light;
     border-radius: $radius-sm;
   }
