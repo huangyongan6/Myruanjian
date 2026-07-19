@@ -326,12 +326,46 @@ onMounted(loadProfile)
 .profile-page {
   &__actions {
     margin-bottom: $spacing-md;
+    display: flex;
+    gap: $spacing-sm;
   }
   &__radar-card {
     margin-bottom: $spacing-md;
+    border-radius: $radius-lg;
+    border: 1px solid $border-light;
+    transition: all $transition-normal;
+
+    &:hover {
+      box-shadow: $shadow-hover;
+    }
+
+    :deep(.el-card__header) {
+      border-bottom: 1px solid $border-light;
+      padding: $spacing-md $spacing-lg;
+    }
+
+    :deep(.el-card__body) {
+      padding: $spacing-lg;
+    }
   }
   &__path-card {
     margin-bottom: $spacing-md;
+    border-radius: $radius-lg;
+    border: 1px solid $border-light;
+    transition: all $transition-normal;
+
+    &:hover {
+      box-shadow: $shadow-hover;
+    }
+
+    :deep(.el-card__header) {
+      border-bottom: 1px solid $border-light;
+      padding: $spacing-md $spacing-lg;
+    }
+
+    :deep(.el-card__body) {
+      padding: $spacing-lg;
+    }
   }
   &__path-info {
     padding: $spacing-xs 0;
@@ -340,42 +374,62 @@ onMounted(loadProfile)
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: $spacing-sm;
+    margin-bottom: $spacing-md;
   }
   &__path-label {
     color: $text-secondary;
     font-size: 13px;
+    font-weight: 500;
   }
   &__path-value {
     color: $text-primary;
-    font-size: 14px;
-    font-weight: 500;
+    font-size: 15px;
+    font-weight: 600;
   }
   &__progress {
     margin-top: $spacing-sm;
+
+    :deep(.el-progress__bar) {
+      border-radius: $radius-full;
+    }
   }
   &__card-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
+    font-weight: 600;
+    color: $text-primary;
   }
   &__updated {
     font-size: 12px;
     color: $text-secondary;
+    font-weight: 400;
   }
   &__details {
     margin-top: 0;
   }
 
-  /* 同行卡片等高 */
   &__card--equal-height {
     height: 100%;
+    border-radius: $radius-lg;
+    border: 1px solid $border-light;
+    transition: all $transition-normal;
+
+    &:hover {
+      box-shadow: $shadow-hover;
+    }
+
     :deep(.el-card__body) {
       min-height: 100px;
+      padding: $spacing-lg;
+    }
+
+    :deep(.el-card__header) {
+      border-bottom: 1px solid $border-light;
+      padding: $spacing-md $spacing-lg;
     }
   }
 
-  /* 字段-值列表（左右两列对齐） */
   &__list {
     list-style: none;
     margin: 0;
@@ -385,8 +439,9 @@ onMounted(loadProfile)
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: $spacing-sm 0;
-    border-bottom: 1px dashed $border-lighter;
+    padding: $spacing-md 0;
+    border-bottom: 1px solid $border-lighter;
+
     &:last-child {
       border-bottom: none;
     }
@@ -396,10 +451,12 @@ onMounted(loadProfile)
     font-size: 13px;
     flex-shrink: 0;
     margin-right: $spacing-md;
+    font-weight: 500;
   }
   &__value {
     color: $text-primary;
     font-size: 14px;
+    font-weight: 500;
     text-align: right;
     word-break: break-word;
   }
@@ -409,14 +466,18 @@ onMounted(loadProfile)
     margin-top: $spacing-xs;
   }
 
-  /* 分块小节（用于多个数组/字段） */
   &__section + &__section {
-    margin-top: $spacing-md;
+    margin-top: $spacing-lg;
+    padding-top: $spacing-lg;
+    border-top: 1px solid $border-lighter;
   }
   &__sub-label {
     color: $text-secondary;
     font-size: 12px;
-    margin-bottom: $spacing-xs;
+    margin-bottom: $spacing-sm;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
   }
   &__empty {
     color: $text-placeholder;
@@ -424,30 +485,37 @@ onMounted(loadProfile)
     padding: $spacing-xs 0;
   }
 
-  /* 标签列表（易错点、兴趣方向） */
   &__tags {
     list-style: none;
     margin: 0;
     padding: 0;
     display: flex;
     flex-wrap: wrap;
-    gap: $spacing-xs;
+    gap: $spacing-sm;
   }
   &__tag {
-    display: inline-block;
-    padding: 2px 10px;
-    border-radius: $radius-sm;
+    display: inline-flex;
+    align-items: center;
+    padding: 6px 12px;
+    border-radius: $radius-full;
     background: $border-lighter;
     color: $text-regular;
     font-size: 13px;
-    line-height: 1.6;
+    font-weight: 500;
+    line-height: 1.4;
+    transition: all $transition-fast;
+
+    &:hover {
+      transform: translateY(-1px);
+    }
+
     &--warn {
-      background: #fef0f0;
-      color: #f56c6c;
+      background: rgba(239, 68, 68, 0.08);
+      color: $danger-color;
     }
     &--primary {
-      background: #ecf5ff;
-      color: #409eff;
+      background: rgba(59, 130, 246, 0.08);
+      color: $primary-color;
     }
   }
 }

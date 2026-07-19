@@ -4,7 +4,7 @@ spring:
     # 注意：Connector/J 8.x 要求 JDK 标准字符集名（UTF-8），mysql 服务端会自动映射到 utf8mb4
     url: jdbc:mysql://${DB_HOST:localhost}:${DB_PORT:3306}/${DB_NAME:Random}?useUnicode=true&characterEncoding=UTF-8&useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true
     username: ${DB_USER:root}
-    password: ${DB_PASSWORD:jsm60605304}
+    password: ${DB_PASSWORD:cxj060214}
     driver-class-name: com.mysql.cj.jdbc.Driver
     hikari:
       maximum-pool-size: 16
@@ -17,8 +17,10 @@ spring:
       port: ${REDIS_PORT:6379}
       database: 0
       timeout: 5s
+      connect-timeout: 5s
       lettuce:
         pool:
           max-active: 16
           max-idle: 8
           min-idle: 2
+        shutdown-timeout: 100ms

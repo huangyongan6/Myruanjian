@@ -175,26 +175,38 @@ function onQuizSubmitted(percent: number): void {
 .recommend-panel {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: $spacing-md;
 
   &__item {
-    transition: transform 0.2s;
+    border-radius: $radius-lg;
+    border: 1px solid $border-light;
+    transition: all $transition-normal;
+    overflow: hidden;
     outline: none !important;
-    &:hover { transform: translateY(-2px); }
+
+    &:hover {
+      transform: translateY(-2px);
+      box-shadow: $shadow-hover;
+    }
+
+    :deep(.el-card__body) {
+      padding: $spacing-lg;
+    }
   }
 
   &__item--matched {
     border: 1px solid $primary-color;
-    box-shadow: 0 0 0 2px rgba(64, 158, 255, 0.12);
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.08);
+    background: rgba(59, 130, 246, 0.02);
   }
 
   &__head {
     display: flex;
     justify-content: space-between;
     align-items: flex-start;
-    gap: $spacing-xs;
+    gap: $spacing-md;
     cursor: pointer;
-    padding-bottom: 6px;
+    padding-bottom: $spacing-sm;
   }
 
   &__head-left {
@@ -206,30 +218,40 @@ function onQuizSubmitted(percent: number): void {
     display: flex;
     flex-direction: column;
     align-items: flex-end;
-    gap: 2px;
+    gap: $spacing-xs;
     flex-shrink: 0;
   }
 
   &__title {
     display: flex;
     align-items: center;
-    gap: 6px;
+    gap: $spacing-sm;
     font-weight: 600;
     flex-wrap: wrap;
-    font-size: 13px;
+    font-size: 15px;
+    color: $text-primary;
+    letter-spacing: -0.01em;
   }
 
   &__point,
   &__reason {
-    font-size: 12px;
+    font-size: 13px;
     color: $text-secondary;
-    margin-top: 2px;
+    margin-top: $spacing-xs;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    line-height: 1.5;
   }
-  &__reason { color: $primary-color; }
+
+  &__reason {
+    color: $primary-color;
+    font-weight: 500;
+  }
 
   &__content {
-    margin-top: $spacing-sm;
-    padding-top: $spacing-sm;
+    margin-top: $spacing-md;
+    padding-top: $spacing-md;
     border-top: 1px dashed $border-lighter;
   }
 }

@@ -1,4 +1,3 @@
-// 全局重置样式
 * {
   box-sizing: border-box;
 }
@@ -26,21 +25,21 @@ a {
   text-decoration: none;
 
   &:hover {
-    opacity: 0.85;
+    color: $primary-dark;
   }
 }
 
-// 通用页面容器
 .page-container {
   padding: $spacing-lg;
   min-height: calc(100vh - #{$header-height});
 }
 
 .page-title {
-  font-size: 22px;
-  font-weight: 600;
+  font-size: 24px;
+  font-weight: 700;
   margin: 0 0 $spacing-md;
   color: $text-primary;
+  letter-spacing: -0.02em;
 }
 
 .page-subtitle {
@@ -49,17 +48,42 @@ a {
   margin-bottom: $spacing-lg;
 }
 
-// 通用卡片
 .section-card {
   background: $bg-card;
-  border-radius: $radius-md;
+  border-radius: $radius-lg;
   box-shadow: $shadow-card;
   padding: $spacing-lg;
   margin-bottom: $spacing-md;
+  border: 1px solid $border-light;
+  transition: box-shadow $transition-normal;
+
+  &:hover {
+    box-shadow: $shadow-hover;
+  }
 }
 
 .empty-tip {
   text-align: center;
   color: $text-secondary;
   padding: $spacing-xl 0;
+}
+
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: $border-lighter;
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: $border-base;
+  border-radius: 3px;
+  transition: background $transition-fast;
+
+  &:hover {
+    background: $text-secondary;
+  }
 }

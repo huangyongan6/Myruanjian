@@ -187,9 +187,19 @@ onBeforeUnmount(() => {
 <style scoped lang="scss">
 .profile-radar {
   width: 100%;
+  background: $bg-card;
+  border: 1px solid $border-light;
+  border-radius: $radius-lg;
+  padding: $spacing-lg;
+  transition: all $transition-fast;
+
+  &:hover {
+    box-shadow: $shadow-sm;
+  }
+
   &__chart {
     width: 100%;
-    height: 400px;
+    height: 420px;
   }
 }
 </style>

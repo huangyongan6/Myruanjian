@@ -551,13 +551,14 @@ const lastUpdatedText = computed(() => {
     display: inline-flex;
     align-items: center;
     gap: 8px;
-    padding: 6px 12px;
-    border-radius: 999px;
-    background: $border-extra-light;
+    padding: 8px 14px;
+    border-radius: $radius-full;
+    background: $border-light;
     color: $text-secondary;
     font-size: 12px;
     line-height: 1;
-    transition: background 0.2s ease, color 0.2s ease;
+    transition: all $transition-normal;
+    border: 1px solid transparent;
   }
   &__live-dot {
     width: 8px;
@@ -568,82 +569,150 @@ const lastUpdatedText = computed(() => {
     animation: dashboard__pulse 1.6s infinite;
   }
   &__live--on {
-    background: rgba(103, 194, 58, 0.12);
+    background: rgba(16, 185, 129, 0.08);
     color: $success-color;
+    border-color: rgba(16, 185, 129, 0.15);
   }
   &__live--on &__live-dot {
     background: $success-color;
-    box-shadow: 0 0 0 0 rgba(103, 194, 58, 0.55);
+    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.55);
   }
   &__live--busy {
-    background: rgba(64, 158, 255, 0.12);
+    background: rgba(59, 130, 246, 0.08);
     color: $primary-color;
+    border-color: rgba(59, 130, 246, 0.15);
   }
   &__live-text {
     font-weight: 600;
   }
   &__live-time {
     color: inherit;
-    opacity: 0.85;
+    opacity: 0.7;
     border-left: 1px solid currentColor;
     padding-left: 8px;
     margin-left: 2px;
+    font-size: 11px;
   }
   &__metrics {
     margin-bottom: $spacing-md;
   }
   &__metric {
-    text-align: center;
+    position: relative;
+    overflow: hidden;
+    border-radius: $radius-lg;
+    border: 1px solid $border-light;
+    transition: all $transition-normal;
+
+    &:hover {
+      transform: translateY(-2px);
+      box-shadow: $shadow-hover;
+      border-color: $primary-color;
+    }
+
+    :deep(.el-card__body) {
+      padding: $spacing-lg;
+    }
   }
   &__metric-label {
     font-size: 13px;
     color: $text-secondary;
     margin-bottom: $spacing-sm;
+    font-weight: 500;
   }
   &__metric-value {
-    font-size: 24px;
-    font-weight: 600;
-    color: $primary-color;
+    font-size: 32px;
+    font-weight: 700;
+    color: $text-primary;
+    letter-spacing: -0.02em;
   }
   &__chart-card {
     margin-bottom: $spacing-md;
+    border-radius: $radius-lg;
+    border: 1px solid $border-light;
+    transition: all $transition-normal;
+
+    &:hover {
+      box-shadow: $shadow-hover;
+    }
+
+    :deep(.el-card__body) {
+      padding: $spacing-lg;
+    }
   }
   &__chart {
     width: 100%;
-    height: 300px;
+    height: 320px;
   }
   &__report {
-    margin-top: -20px;
+    margin-top: $spacing-sm;
+    border-radius: $radius-lg;
+    border: 1px solid $border-light;
+    transition: all $transition-normal;
+
+    &:hover {
+      box-shadow: $shadow-hover;
+    }
+
+    :deep(.el-card__header) {
+      border-bottom: 1px solid $border-light;
+      padding: $spacing-md $spacing-lg;
+    }
+
+    :deep(.el-card__body) {
+      padding: $spacing-lg;
+    }
   }
   &__report-header {
     display: flex;
     align-items: center;
     gap: $spacing-sm;
-  }
-  &__report-section {
-    margin-top: $spacing-sm;
-    &:first-of-type {
-      margin-top: 0;
-    }
-  }
-  &__report-title {
-    margin: 0 0 6px;
-    font-size: 13px;
     font-weight: 600;
     color: $text-primary;
   }
+  &__report-section {
+    margin-top: $spacing-md;
+    padding-bottom: $spacing-md;
+    border-bottom: 1px solid $border-lighter;
+
+    &:first-of-type {
+      margin-top: 0;
+      padding-top: 0;
+    }
+
+    &:last-of-type {
+      border-bottom: none;
+      padding-bottom: 0;
+    }
+  }
+  &__report-title {
+    margin: 0 0 $spacing-sm;
+    font-size: 14px;
+    font-weight: 600;
+    color: $text-primary;
+    display: flex;
+    align-items: center;
+    gap: $spacing-sm;
+
+    &::before {
+      content: '';
+      width: 3px;
+      height: 14px;
+      border-radius: 2px;
+      background: $primary-color;
+    }
+  }
   &__report-text {
     margin: 0;
-    line-height: 1.6;
+    line-height: 1.7;
     color: $text-regular;
-    font-size: 13px;
+    font-size: 14px;
   }
   &__report-stats {
-    margin-top: $spacing-sm;
-    margin-bottom: $spacing-sm;
-    padding: $spacing-sm;
-    background: $border-extra-light;
-    border-radius: $radius-sm;
+    margin-top: $spacing-md;
+    margin-bottom: $spacing-md;
+    padding: $spacing-lg;
+    background: $bg-page;
+    border-radius: $radius-md;
   }
   &__report-stat {
     text-align: center;
@@ -652,29 +721,34 @@ const lastUpdatedText = computed(() => {
   &__report-stat-label {
     font-size: 12px;
     color: $text-secondary;
-    margin-bottom: 4px;
+    margin-bottom: 6px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
   }
   &__report-stat-value {
-    font-size: 18px;
-    font-weight: 600;
+    font-size: 22px;
+    font-weight: 700;
     color: $primary-color;
+    letter-spacing: -0.02em;
   }
   &__report-list {
     margin: 0;
     padding-left: 20px;
     line-height: 1.8;
-    font-size: 13px;
+    font-size: 14px;
     color: $text-regular;
   }
   &__report-list--good li::marker {
     color: $success-color;
+    font-weight: 600;
   }
   &__report-list--warn li::marker {
     color: $warning-color;
+    font-weight: 600;
   }
   &__report-list--action li::marker {
     color: $primary-color;
-    font-weight: 600;
+    font-weight: 700;
   }
 }
 

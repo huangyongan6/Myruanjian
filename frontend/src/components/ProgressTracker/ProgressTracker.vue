@@ -30,13 +30,34 @@ const percent = computed(() => {
 <style scoped lang="scss">
 .progress-tracker {
   background: $bg-card;
-  border: 1px solid $border-lighter;
-  border-radius: $radius-md;
-  padding: $spacing-md;
+  border: 1px solid $border-light;
+  border-radius: $radius-lg;
+  padding: $spacing-lg;
+  transition: all $transition-fast;
+
+  &:hover {
+    box-shadow: $shadow-sm;
+    border-color: $primary-color;
+  }
+
   &__label {
-    font-size: 13px;
-    color: $text-regular;
-    margin-bottom: $spacing-sm;
+    font-size: 14px;
+    font-weight: 500;
+    color: $text-primary;
+    margin-bottom: $spacing-md;
+    display: flex;
+    align-items: center;
+    gap: $spacing-sm;
+  }
+
+  :deep(.el-progress__bar) {
+    border-radius: $radius-full;
+  }
+
+  :deep(.el-progress__text) {
+    font-weight: 600;
+    font-size: 14px;
+    color: $text-primary;
   }
 }
 </style>

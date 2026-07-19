@@ -75,13 +75,22 @@ async function loadRecommend(): Promise<void> {
 
 async function generate(): Promise<void> {
   if (studentId.value === null) return
-  const result = await pathStore.generate(studentId.value)
-  if (result) {
-    ElMessage.success('学习路径已生成')
+  try {
+    const result = await pathStore.generate(studentId.value)
+    if (result) {
+      ElMessage.success('学习路径已生成')
+    }
+    // 重新从后端获取最新数据，确保路径内容是最新的
+    await pathStore.fetchLatest(studentId.value)
+    await loadRecommend()
+  } catch (e: unknown) {
+    const msg = e instanceof Error ? e.message : '生成学习路径失败'
+    if (msg.includes('画像')) {
+      ElMessage.warning('请先前往「对话学习」页面与 AI 助手交流，完成学习画像构建后再生成学习路径')
+    } else {
+      ElMessage.error(msg)
+    }
   }
-  // 重新从后端获取最新数据，确保路径内容是最新的
-  await pathStore.fetchLatest(studentId.value)
-  await loadRecommend()
 }
 
 function onStepComplete(index: number): void {
@@ -108,38 +117,56 @@ onMounted(loadAll)
       <el-button @click="loadRecommend"><IconSvg name="refresh" :size="16" /> 刷新推荐</el-button>
     </div>
 
-    <el-card v-if="pathStore.currentPath" class="learning-path__progress" shadow="never">
-      <el-progress
-        :percentage="pathStore.progressPercent"
-        :status="pathStore.progressPercent >= 100 ? 'success' : ''"
-        :stroke-width="18"
-      />
-      <div class="learning-path__progress-text">
-        进度：第 {{ pathStore.currentStepIndex }} / {{ pathStore.currentPath.totalSteps }} 步
+    <div v-if="!pathStore.currentPath && !pathStore.loading" class="learning-path__empty">
+      <div class="learning-path__empty-icon">
+        <IconSvg name="compass" :size="48" />
       </div>
-    </el-card>
+      <h3 class="learning-path__empty-title">暂无学习路径</h3>
+      <p class="learning-path__empty-desc">学习路径需要基于您的学习画像来智能规划</p>
+      <div class="learning-path__empty-tips">
+        <p><IconSvg name="chat" :size="16" /> 请先前往「对话学习」页面与 AI 助手交流</p>
+        <p><IconSvg name="brain" :size="16" /> AI 将根据您的对话自动构建学习画像</p>
+        <p><IconSvg name="path" :size="16" /> 画像构建完成后即可生成个性化学习路径</p>
+      </div>
+      <el-button type="primary" @click="router.push('/chat')">
+        <IconSvg name="arrow-right" :size="16" /> 去对话学习
+      </el-button>
+    </div>
 
-    <el-row :gutter="16">
-      <el-col :xs="24" :md="16">
-        <h3 class="learning-path__section-title"><IconSvg name="location" :size="16" /> 学习步骤</h3>
-        <PathTimeline
-          :steps="pathStore.steps"
-          :current-index="pathStore.currentStepIndex"
-          @complete="onStepComplete"
+    <template v-else>
+      <el-card v-if="pathStore.currentPath" class="learning-path__progress" shadow="never">
+        <el-progress
+          :percentage="pathStore.progressPercent"
+          :status="pathStore.progressPercent >= 100 ? 'success' : ''"
+          :stroke-width="18"
         />
-      </el-col>
-      <el-col :xs="24" :md="8">
-        <h3 class="learning-path__section-title"><IconSvg name="target" :size="16" /> 推荐资源</h3>
-        <div v-if="loadingRecommend" class="empty-tip">加载中...</div>
-        <RecommendPanel
-          v-else
-          :items="recommendations"
-          :current-point="currentStepPoint"
-          empty-text="暂无推荐资源"
-          @view="onViewResource"
-        />
-      </el-col>
-    </el-row>
+        <div class="learning-path__progress-text">
+          进度：第 {{ pathStore.currentStepIndex }} / {{ pathStore.currentPath.totalSteps }} 步
+        </div>
+      </el-card>
+
+      <el-row :gutter="16">
+        <el-col :xs="24" :md="16">
+          <h3 class="learning-path__section-title"><IconSvg name="location" :size="16" /> 学习步骤</h3>
+          <PathTimeline
+            :steps="pathStore.steps"
+            :current-index="pathStore.currentStepIndex"
+            @complete="onStepComplete"
+          />
+        </el-col>
+        <el-col :xs="24" :md="8">
+          <h3 class="learning-path__section-title"><IconSvg name="target" :size="16" /> 推荐资源</h3>
+          <div v-if="loadingRecommend" class="empty-tip">加载中...</div>
+          <RecommendPanel
+            v-else
+            :items="recommendations"
+            :current-point="currentStepPoint"
+            empty-text="暂无推荐资源"
+            @view="onViewResource"
+          />
+        </el-col>
+      </el-row>
+    </template>
   </div>
 </template>
 
@@ -152,17 +179,89 @@ onMounted(loadAll)
   }
   &__progress {
     margin-bottom: $spacing-lg;
+    border-radius: $radius-lg;
+    border: 1px solid $border-light;
+    padding: $spacing-lg;
+
+    :deep(.el-progress__bar) {
+      border-radius: $radius-full;
+    }
   }
   &__progress-text {
-    margin-top: $spacing-sm;
-    font-size: 13px;
+    margin-top: $spacing-md;
+    font-size: 14px;
     color: $text-secondary;
     text-align: right;
+    font-weight: 500;
   }
   &__section-title {
-    font-size: 16px;
+    font-size: 18px;
+    font-weight: 700;
+    margin: 0 0 $spacing-lg;
+    color: $text-primary;
+    letter-spacing: -0.01em;
+    display: flex;
+    align-items: center;
+    gap: $spacing-sm;
+
+    &::before {
+      content: '';
+      width: 4px;
+      height: 18px;
+      border-radius: 2px;
+      background: $primary-color;
+    }
+  }
+  &__empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: $spacing-2xl * 2;
+    text-align: center;
+  }
+  &__empty-icon {
+    width: 80px;
+    height: 80px;
+    border-radius: $radius-full;
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(139, 92, 246, 0.1) 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: $spacing-lg;
+    color: $primary-color;
+  }
+  &__empty-title {
+    font-size: 20px;
     font-weight: 600;
-    margin: 0 0 $spacing-md;
+    color: $text-primary;
+    margin: 0 0 $spacing-sm;
+  }
+  &__empty-desc {
+    font-size: 14px;
+    color: $text-secondary;
+    margin: 0 0 $spacing-xl;
+  }
+  &__empty-tips {
+    text-align: left;
+    background: $bg-card;
+    border-radius: $radius-lg;
+    padding: $spacing-lg;
+    margin-bottom: $spacing-xl;
+    border: 1px solid $border-light;
+
+    p {
+      display: flex;
+      align-items: center;
+      gap: $spacing-sm;
+      font-size: 13px;
+      color: $text-regular;
+      margin: $spacing-xs 0;
+
+      svg {
+        color: $primary-color;
+      }
+    }
   }
 }
 </style>

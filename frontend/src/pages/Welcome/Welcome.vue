@@ -620,14 +620,16 @@ const sloganDisplay = computed(() => sloganText.value)
   --card-hover: rgba(255, 255, 255, 0.05);
 
   min-height: 100vh;
-  background: var(--bg-primary);
+  background: transparent;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  position: relative;
+  position: fixed;
+  inset: 0;
   overflow: hidden;
   transition: background 0.5s ease;
+  z-index: 100;
 
   &--light {
     --bg-primary: #f8fafc;
@@ -639,9 +641,9 @@ const sloganDisplay = computed(() => sloganText.value)
   }
 
   &__canvas {
-    position: fixed;
+    position: absolute;
     inset: 0;
-    z-index: 1;
+    z-index: 0;
     pointer-events: none;
   }
 
@@ -681,7 +683,7 @@ const sloganDisplay = computed(() => sloganText.value)
 
   &__content {
     position: relative;
-    z-index: 10;
+    z-index: 2;
     display: flex;
     flex-direction: column;
     align-items: center;

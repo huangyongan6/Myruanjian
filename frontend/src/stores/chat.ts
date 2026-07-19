@@ -208,6 +208,20 @@ export const useChatStore = defineStore('chat', () => {
     persistMessages()
   }
 
+  function logout(): void {
+    messages.value = {}
+    streamingBuffer.value = null
+    currentAgent.value = null
+    isStreamingActive.value = false
+    hasMore.value = {}
+    loadingMore.value = {}
+    try {
+      window.localStorage.removeItem(STORAGE_KEYS.CHAT_HISTORY)
+    } catch {
+      // ignore
+    }
+  }
+
   return {
     messages,
     streamingBuffer,
@@ -224,6 +238,7 @@ export const useChatStore = defineStore('chat', () => {
     cancelStream,
     loadHistory,
     loadMoreHistory,
-    clearHistory
+    clearHistory,
+    logout
   }
 })

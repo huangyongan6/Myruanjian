@@ -62,6 +62,15 @@ export const useStudentStore = defineStore('student', () => {
     removeItem(STORAGE_KEYS.CURRENT_STUDENT_ID)
   }
 
+  function logout(): void {
+    currentStudent.value = null
+    currentStudentId.value = null
+    removeItem(STORAGE_KEYS.CURRENT_STUDENT)
+    removeItem(STORAGE_KEYS.CURRENT_STUDENT_ID)
+    removeItem(STORAGE_KEYS.CHAT_HISTORY)
+    removeItem(STORAGE_KEYS.LEARNING_PATH)
+  }
+
   return {
     currentStudentId,
     currentStudent,
@@ -71,6 +80,7 @@ export const useStudentStore = defineStore('student', () => {
     loadById,
     createAndSet,
     setCurrentStudent,
-    clearCurrentStudent
+    clearCurrentStudent,
+    logout
   }
 })

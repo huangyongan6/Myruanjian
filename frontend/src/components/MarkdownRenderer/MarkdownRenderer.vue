@@ -50,79 +50,171 @@ const html = computed(() => {
 <style scoped lang="scss">
 .markdown-renderer {
   font-size: 14px;
-  line-height: 1.7;
+  line-height: 1.8;
   color: $text-primary;
 
   :deep(h1),
   :deep(h2),
   :deep(h3),
   :deep(h4) {
-    margin: 0.8em 0 0.4em;
+    margin: 1em 0 0.5em;
     font-weight: 600;
     line-height: 1.3;
+    letter-spacing: -0.02em;
   }
-  :deep(h1) { font-size: 1.6em; }
-  :deep(h2) { font-size: 1.35em; }
-  :deep(h3) { font-size: 1.15em; }
-  :deep(p) { margin: 0.4em 0; }
-  :deep(ul),
-  :deep(ol) { margin: 0.4em 0; padding-left: 1.5em; }
-  :deep(li) { margin: 0.2em 0; }
-  :deep(a) { color: $primary-color; text-decoration: none; }
-  :deep(a):hover { text-decoration: underline; }
-  :deep(blockquote) {
+
+  :deep(h1) {
+    font-size: 1.8em;
+    padding-bottom: 0.3em;
+    border-bottom: 2px solid $border-light;
+    color: $text-primary;
+  }
+
+  :deep(h2) {
+    font-size: 1.4em;
+    padding-bottom: 0.2em;
+    border-bottom: 1px solid $border-lighter;
+    color: $text-primary;
+  }
+
+  :deep(h3) {
+    font-size: 1.2em;
+    color: $text-primary;
+  }
+
+  :deep(h4) {
+    font-size: 1.05em;
+    color: $text-primary;
+  }
+
+  :deep(p) {
     margin: 0.5em 0;
-    padding: 0.2em 0.8em;
-    border-left: 3px solid $primary-color;
     color: $text-regular;
-    background: $border-extra-light;
   }
+
+  :deep(ul),
+  :deep(ol) {
+    margin: 0.5em 0;
+    padding-left: 1.8em;
+    color: $text-regular;
+  }
+
+  :deep(li) {
+    margin: 0.3em 0;
+    line-height: 1.7;
+  }
+
+  :deep(a) {
+    color: $primary-color;
+    text-decoration: none;
+    font-weight: 500;
+    transition: all $transition-fast;
+
+    &:hover {
+      text-decoration: underline;
+      opacity: 0.85;
+    }
+  }
+
+  :deep(blockquote) {
+    margin: 0.8em 0;
+    padding: $spacing-md $spacing-lg;
+    border-left: 4px solid $primary-color;
+    color: $text-secondary;
+    background: rgba(59, 130, 246, 0.04);
+    border-radius: 0 $radius-md $radius-md 0;
+    font-style: italic;
+    font-size: 14px;
+    line-height: 1.7;
+  }
+
   :deep(table) {
     border-collapse: collapse;
     width: 100%;
-    margin: 0.6em 0;
+    margin: 0.8em 0;
+    background: $bg-card;
+    border-radius: $radius-md;
+    overflow: hidden;
+    border: 1px solid $border-light;
   }
+
   :deep(th),
   :deep(td) {
-    border: 1px solid $border-light;
-    padding: 6px 10px;
+    border: 1px solid $border-lighter;
+    padding: $spacing-sm $spacing-md;
+    text-align: left;
+    font-size: 13px;
   }
-  :deep(th) { background: $border-extra-light; }
+
+  :deep(th) {
+    background: $border-lighter;
+    font-weight: 600;
+    color: $text-primary;
+  }
+
   :deep(code) {
-    background: rgba(27, 31, 35, 0.05);
-    padding: 2px 6px;
-    border-radius: 3px;
-    font-size: 0.9em;
-    font-family: 'SFMono-Regular', Consolas, monospace;
-  }
-  :deep(pre) {
-    margin: 0.6em 0;
-    padding: $spacing-md;
-    background: #f6f8fa;
+    background: rgba(59, 130, 246, 0.08);
+    padding: 3px 8px;
     border-radius: $radius-sm;
-    overflow-x: auto;
+    font-size: 0.88em;
+    font-family: 'SF Mono', 'Fira Code', Consolas, monospace;
+    color: $primary-color;
+    font-weight: 500;
   }
+
+  :deep(pre) {
+    margin: 0.8em 0;
+    padding: $spacing-lg;
+    background: $bg-card;
+    border-radius: $radius-md;
+    overflow-x: auto;
+    border: 1px solid $border-light;
+    box-shadow: $shadow-sm;
+  }
+
   :deep(pre code) {
     background: transparent;
     padding: 0;
     font-size: 13px;
-  }
-  :deep(.hljs) {
-    background: #f6f8fa;
+    color: $text-primary;
+    font-weight: 400;
+    line-height: 1.6;
   }
 
-  // KaTeX 渲染出的数学公式 — 仅做版式修饰，字体沿用 KaTeX 默认（衬线/宋体观感）
+  :deep(.hljs) {
+    background: $bg-card;
+  }
+
   :deep(.katex-display) {
-    margin: 0.8em 0;
+    margin: 1em 0;
     overflow-x: auto;
     overflow-y: hidden;
   }
+
   :deep(.katex) {
     font-size: 1.05em;
   }
+
   :deep(.katex-display > .katex) {
     display: inline-block;
     text-align: center;
+  }
+
+  :deep(hr) {
+    margin: 1.5em 0;
+    border: none;
+    height: 1px;
+    background: $border-light;
+  }
+
+  :deep(strong) {
+    color: $text-primary;
+    font-weight: 600;
+  }
+
+  :deep(em) {
+    color: $text-regular;
+    font-style: italic;
   }
 }
 </style>

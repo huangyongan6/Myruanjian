@@ -256,32 +256,78 @@ onMounted(reload)
     flex-wrap: wrap;
     gap: $spacing-sm;
   }
-  &__col { margin-bottom: $spacing-md; }
+  &__col {
+    margin-bottom: $spacing-md;
+  }
   &__card {
     height: 100%;
     display: flex;
     flex-direction: column;
+    border-radius: $radius-lg;
+    border: 1px solid $border-light;
+    transition: all $transition-normal;
+    overflow: hidden;
+
+    &:hover {
+      transform: translateY(-2px);
+      box-shadow: $shadow-hover;
+      border-color: $primary-color;
+    }
+
+    :deep(.el-card__body) {
+      padding: $spacing-lg;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+    }
   }
   &__card-head {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: $spacing-sm;
+    margin-bottom: $spacing-md;
   }
   &__date {
-    font-size: 12px;
+    font-size: 11px;
     color: $text-secondary;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
   }
   &__title {
     margin: 0 0 $spacing-sm;
-    font-size: 15px;
+    font-size: 16px;
+    font-weight: 600;
     color: $text-primary;
+    line-height: 1.4;
+    flex: 1;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
   }
   &__point {
     margin: 0 0 $spacing-md;
-    font-size: 12px;
+    font-size: 13px;
     color: $text-secondary;
+    background: $border-lighter;
+    padding: 4px 10px;
+    border-radius: $radius-full;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    align-self: flex-start;
   }
-  &__open { align-self: flex-start; }
+  &__open {
+    align-self: flex-start;
+    border-radius: $radius-md;
+    font-weight: 500;
+    padding: 8px 16px;
+    transition: all $transition-fast;
+
+    &:hover {
+      transform: scale(1.02);
+    }
+  }
 }
 </style>

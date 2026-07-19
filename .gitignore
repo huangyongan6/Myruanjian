@@ -6,6 +6,7 @@
 # 依赖
 node_modules/
 target/
+.npm-cache/
 
 # IDE
 .idea/

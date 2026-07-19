@@ -18,6 +18,15 @@ const showInitDialog = ref(!studentStore.isLoggedIn)
 const initName = ref('')
 const initId = ref<number | null>(null)
 const initMode = ref<'create' | 'load'>('create')
+
+watch(
+  () => studentStore.isLoggedIn,
+  (isLoggedIn) => {
+    if (!isLoggedIn) {
+      showInitDialog.value = true
+    }
+  }
+)
 /** 用户是否主动滑动过页面（主动滑动后暂停自动滚动，直到发送新消息） */
 const userScrolled = ref(false)
 
@@ -259,47 +268,52 @@ onMounted(() => {
     justify-content: space-between;
     align-items: center;
     margin-bottom: $spacing-md;
+    padding: 0 2px;
   }
   &__messages {
     flex: 1;
     overflow-y: auto;
     background: $bg-card;
-    border-radius: $radius-md;
-    border: 1px solid $border-lighter;
-    padding: $spacing-md 0;
+    border-radius: $radius-lg;
+    border: 1px solid $border-light;
+    padding: $spacing-lg;
+    box-shadow: $shadow-card;
   }
   &__composer {
     margin-top: $spacing-md;
   }
 
   &__composer-outer {
-    border-radius: 16px;
+    border-radius: $radius-xl;
     background: transparent;
   }
 
   &__composer-box {
     background: $bg-card;
-    border-radius: 14px;
+    border-radius: $radius-lg;
     padding: $spacing-md;
     display: flex;
     flex-direction: column;
     gap: $spacing-sm;
-    border: 1.5px solid rgba(0, 0, 0, 0.15);
-    transition: border-color 0.25s ease, box-shadow 0.25s ease;
+    border: 1.5px solid $border-light;
+    transition: all $transition-normal;
+    box-shadow: $shadow-card;
 
     &:focus-within {
-      border-color: var(--el-color-primary, #409eff);
-      box-shadow: 0 0 0 3px rgba(64, 158, 255, 0.15);
+      border-color: $primary-color;
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.12);
+      transform: translateY(-1px);
     }
 
     :deep(.el-textarea__inner) {
       border: none !important;
       box-shadow: none !important;
-      padding: 0;
+      padding: $spacing-sm;
       font-size: 15px;
-      line-height: 1;
+      line-height: 1.6;
       color: $text-primary;
-      background: transparent;
+      background: $bg-page;
+      border-radius: $radius-md;
       resize: none;
 
       &::placeholder {
@@ -309,6 +323,7 @@ onMounted(() => {
       &:focus {
         outline: none;
         box-shadow: none !important;
+        background: $border-lighter;
       }
     }
   }
@@ -323,41 +338,59 @@ onMounted(() => {
   &__composer-tips {
     display: flex;
     align-items: center;
-    gap: $spacing-sm;
+    gap: $spacing-md;
   }
 
   &__composer-tip {
     display: inline-flex;
     align-items: center;
-    gap: 3px;
+    gap: 4px;
     font-size: 12px;
-    color: $text-placeholder;
+    color: $text-secondary;
 
     kbd {
       display: inline-flex;
       align-items: center;
-      padding: 2px 6px;
+      padding: 3px 8px;
       background: $bg-page;
-      border: 1px solid darken($border-extra-light, 3%);
-      border-radius: 5px;
+      border: 1px solid $border-base;
+      border-radius: $radius-sm;
       font-size: 11px;
       font-family: inherit;
-      color: $text-secondary;
+      color: $text-primary;
+      font-weight: 600;
     }
   }
 
   &__composer-send {
-    border-radius: 8px;
-    font-size: 13px;
+    border-radius: $radius-md;
+    font-size: 14px;
+    font-weight: 600;
+    padding: 10px 20px;
     display: inline-flex;
     align-items: center;
+    gap: 6px;
+    transition: all $transition-fast;
+
+    &:hover:not(:disabled) {
+      transform: scale(1.02);
+      box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+    }
   }
   &__dialog-tip {
     color: $text-regular;
     margin-bottom: $spacing-md;
+    font-size: 14px;
+    line-height: 1.5;
   }
   &__dialog-mode {
     margin-bottom: $spacing-md;
+
+    :deep(.el-radio-button__inner) {
+      border-radius: $radius-md;
+      padding: 8px 20px;
+      font-weight: 500;
+    }
   }
   &__dialog-form {
     margin-top: $spacing-md;

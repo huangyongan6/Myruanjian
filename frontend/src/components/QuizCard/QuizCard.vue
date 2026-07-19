@@ -187,67 +187,159 @@ function reset(): void {
     align-items: center;
     gap: $spacing-sm;
     width: 100%;
+    flex-wrap: wrap;
   }
+
   &__index {
     font-weight: 600;
     color: $text-primary;
+    font-size: 13px;
+    background: $border-lighter;
+    padding: 4px 10px;
+    border-radius: $radius-full;
   }
+
   &__question {
     color: $text-regular;
+    font-size: 14px;
+    flex: 1;
+    line-height: 1.5;
   }
+
   &__options {
     display: flex;
     flex-direction: column;
-    gap: $spacing-sm;
-    padding: $spacing-sm 0;
+    gap: $spacing-md;
+    padding: $spacing-md 0;
   }
+
   &__option {
-    padding: $spacing-sm $spacing-md;
-    border: 1px solid $border-base;
-    border-radius: $radius-sm;
+    padding: $spacing-md;
+    border: 1.5px solid $border-light;
+    border-radius: $radius-md;
     cursor: pointer;
-    transition: all 0.2s;
-    &:hover { border-color: $primary-color; }
+    transition: all $transition-fast;
+    font-size: 14px;
+    line-height: 1.6;
+    position: relative;
+    overflow: hidden;
+
+    &::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 0;
+      bottom: 0;
+      width: 3px;
+      background: transparent;
+      transition: background $transition-fast;
+    }
+
+    &:hover {
+      border-color: $primary-color;
+      background: rgba(59, 130, 246, 0.03);
+      transform: translateX(4px);
+    }
+
     &.is-selected {
-      background: rgba(64, 158, 255, 0.1);
+      background: rgba(59, 130, 246, 0.08);
       border-color: $primary-color;
       color: $primary-color;
+      font-weight: 500;
+
+      &::before {
+        background: $primary-color;
+      }
     }
+
     &.is-correct {
-      background: rgba(103, 194, 58, 0.1);
+      background: rgba(16, 185, 129, 0.08);
       border-color: $success-color;
       color: $success-color;
+      font-weight: 500;
+
+      &::before {
+        background: $success-color;
+      }
     }
+
     &.is-wrong {
-      background: rgba(245, 108, 108, 0.1);
+      background: rgba(239, 68, 68, 0.08);
       border-color: $danger-color;
       color: $danger-color;
+      font-weight: 500;
+
+      &::before {
+        background: $danger-color;
+      }
     }
   }
+
   &__explanation {
-    margin-top: $spacing-md;
-    padding: $spacing-md;
-    background: $border-extra-light;
-    border-radius: $radius-sm;
-    font-size: 13px;
+    margin-top: $spacing-lg;
+    padding: $spacing-lg;
+    background: $border-lighter;
+    border-radius: $radius-md;
+    font-size: 14px;
     color: $text-regular;
-    &-text { margin-top: $spacing-sm; color: $text-secondary; }
+    line-height: 1.6;
+    border-left: 3px solid $primary-color;
+
+    &-text {
+      margin-top: $spacing-md;
+      color: $text-secondary;
+      font-size: 13px;
+    }
   }
+
   &__short {
-    padding: $spacing-sm 0;
+    padding: $spacing-md 0;
+
+    :deep(.el-input__inner) {
+      border-radius: $radius-md;
+      border-color: $border-light;
+      font-size: 14px;
+      line-height: 1.6;
+    }
   }
+
   &__answer-box {
-    margin-bottom: $spacing-sm;
+    margin-bottom: $spacing-md;
   }
+
   &__answer-text {
-    margin: $spacing-xs 0 0;
+    margin: $spacing-sm 0 0;
     color: $success-color;
     font-size: 14px;
+    font-weight: 500;
+    padding: $spacing-sm $spacing-md;
+    background: rgba(16, 185, 129, 0.08);
+    border-radius: $radius-sm;
+    display: inline-block;
   }
+
   &__actions {
-    margin-top: $spacing-lg;
+    margin-top: $spacing-xl;
     text-align: center;
+    display: flex;
+    justify-content: center;
+    gap: $spacing-md;
+
+    :deep(.el-button) {
+      border-radius: $radius-md;
+      font-weight: 500;
+      padding: 10px 24px;
+    }
   }
-  &__score { margin-bottom: $spacing-lg; }
+
+  &__score {
+    margin-bottom: $spacing-lg;
+
+    :deep(.el-result) {
+      background: $bg-card;
+      border-radius: $radius-lg;
+      border: 1px solid $border-light;
+    }
+  }
 }
 </style>

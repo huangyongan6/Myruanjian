@@ -97,8 +97,14 @@ watch(() => props.tree, (newTree) => {
   min-height: 400px;
   overflow: auto;
   background: $bg-card;
-  border-radius: $radius-md;
-  padding: $spacing-lg;
+  border-radius: $radius-lg;
+  padding: $spacing-xl;
+  border: 1px solid $border-light;
+  transition: all $transition-fast;
+
+  &:hover {
+    box-shadow: $shadow-sm;
+  }
 
   &__empty {
     display: flex;
@@ -106,6 +112,7 @@ watch(() => props.tree, (newTree) => {
     justify-content: center;
     height: 300px;
     color: $text-secondary;
+    font-size: 14px;
   }
 
   &__container {
@@ -135,44 +142,57 @@ watch(() => props.tree, (newTree) => {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 20px;
+    gap: 24px;
   }
 
   &__node {
-    padding: 10px 16px;
-    border-radius: 8px;
+    padding: 12px 20px;
+    border-radius: $radius-md;
     font-size: 14px;
     text-align: center;
-    min-width: 80px;
-    max-width: 140px;
+    min-width: 100px;
+    max-width: 160px;
     word-break: break-word;
+    transition: all $transition-fast;
+    position: relative;
 
     &--root {
-      background: #409eff;
+      background: linear-gradient(135deg, $primary-color, $primary-dark);
       color: #fff;
       font-weight: 600;
       font-size: 16px;
-      padding: 14px 24px;
-      min-width: 120px;
+      padding: 16px 32px;
+      min-width: 140px;
+      box-shadow: 0 4px 16px rgba(59, 130, 246, 0.3);
     }
 
     &--parent {
-      background: #fff;
-      border: 2px solid #409eff;
-      color: #303133;
+      background: $bg-card;
+      border: 2px solid $primary-color;
+      color: $text-primary;
+      font-weight: 500;
 
       &.is-expandable {
         cursor: pointer;
+
         &:hover {
-          background: rgba(64, 158, 255, 0.1);
+          background: rgba(59, 130, 246, 0.08);
+          transform: translateY(-2px);
+          box-shadow: $shadow-sm;
         }
       }
     }
 
     &--child {
-      background: rgba(103, 194, 58, 0.1);
-      border: 2px solid #67c23a;
-      color: #303133;
+      background: rgba(16, 185, 129, 0.08);
+      border: 2px solid $success-color;
+      color: $text-primary;
+      font-weight: 500;
+
+      &:hover {
+        background: rgba(16, 185, 129, 0.12);
+        transform: translateY(-2px);
+      }
     }
   }
 
@@ -181,17 +201,25 @@ watch(() => props.tree, (newTree) => {
   }
 
   &__toggle {
-    display: inline-block;
-    margin-left: 4px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    height: 20px;
+    margin-left: 6px;
     font-weight: bold;
-    color: #409eff;
+    color: $primary-color;
+    background: $border-lighter;
+    border-radius: 50%;
+    font-size: 12px;
+    transition: all $transition-fast;
   }
 
   &__children {
     display: flex;
     flex-wrap: wrap;
-    gap: 16px;
-    margin-top: 16px;
+    gap: 20px;
+    margin-top: 20px;
     justify-content: center;
   }
 

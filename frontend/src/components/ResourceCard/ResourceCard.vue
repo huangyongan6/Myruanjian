@@ -132,21 +132,24 @@ const readingRawItems = computed<ReadingItem[]>(() => {
 <style scoped lang="scss">
 .resource-card {
   background: $bg-card;
-  border: 1px solid $border-lighter;
-  border-radius: $radius-md;
-  padding: $spacing-md;
-  transition: box-shadow 0.2s;
+  border: 1px solid $border-light;
+  border-radius: $radius-lg;
+  padding: $spacing-lg;
+  transition: all $transition-normal;
   display: flex;
   flex-direction: column;
   gap: $spacing-md;
+  overflow: hidden;
 
   &:hover {
     box-shadow: $shadow-hover;
+    border-color: $primary-color;
+    transform: translateY(-1px);
   }
 
   &__header {
     border-bottom: 1px solid $border-lighter;
-    padding-bottom: $spacing-sm;
+    padding-bottom: $spacing-md;
   }
 
   &__title-row {
@@ -158,77 +161,127 @@ const readingRawItems = computed<ReadingItem[]>(() => {
 
   &__title {
     margin: 0;
-    font-size: 16px;
+    font-size: 17px;
     font-weight: 600;
     color: $text-primary;
+    letter-spacing: -0.01em;
   }
 
   &__meta {
     display: flex;
-    gap: $spacing-md;
-    margin-top: $spacing-xs;
+    gap: $spacing-lg;
+    margin-top: $spacing-sm;
     font-size: 12px;
     color: $text-secondary;
+
+    span {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
   }
 
   &__body {
     flex: 1;
+    min-height: 100px;
   }
 
   &__mindmap {
-    height: 500px;
+    height: 450px;
   }
 
   &__reading {
     display: flex;
     flex-direction: column;
-    gap: $spacing-sm;
+    gap: $spacing-md;
   }
 
   &__reading-item {
+    border-radius: $radius-md;
+    border: 1px solid $border-light;
+    overflow: hidden;
+    transition: all $transition-fast;
+
+    &:hover {
+      border-color: $primary-color;
+      box-shadow: $shadow-sm;
+    }
+
+    :deep(.el-card__body) {
+      padding: $spacing-md;
+    }
+
     .resource-card__reading-title {
       display: flex;
       align-items: center;
       gap: $spacing-sm;
       font-weight: 600;
+      font-size: 15px;
+      color: $text-primary;
+      margin-bottom: $spacing-xs;
     }
+
     .resource-card__reading-type,
     .resource-card__reading-reason {
       font-size: 12px;
       color: $text-secondary;
       margin-top: 4px;
+      display: flex;
+      align-items: center;
+      gap: 4px;
     }
+
     .resource-card__reading-link {
-      display: inline-block;
+      display: inline-flex;
+      align-items: center;
       margin-top: $spacing-sm;
       font-size: 13px;
+      font-weight: 500;
+      color: $primary-color;
+      transition: all $transition-fast;
+
+      &:hover {
+        transform: translateX(4px);
+      }
     }
   }
 
   &__code {
     display: flex;
     flex-direction: column;
-    gap: $spacing-sm;
-    &-desc { margin: 0; color: $text-regular; }
+    gap: $spacing-md;
+
+    &-desc {
+      margin: 0;
+      color: $text-regular;
+      font-size: 14px;
+      line-height: 1.6;
+    }
+
     &-explain {
-      padding: $spacing-sm $spacing-md;
-      background: $border-extra-light;
-      border-radius: $radius-sm;
+      padding: $spacing-md;
+      background: rgba(59, 130, 246, 0.05);
+      border-left: 3px solid $primary-color;
+      border-radius: 0 $radius-sm $radius-sm 0;
       font-size: 13px;
       color: $text-regular;
+      line-height: 1.6;
     }
   }
 
   &__footer {
     text-align: right;
+    padding-top: $spacing-sm;
+    border-top: 1px dashed $border-lighter;
   }
 
   &__summary {
-    font-size: 12px;
+    font-size: 13px;
     color: $text-secondary;
-    background: $border-extra-light;
-    padding: $spacing-sm $spacing-md;
-    border-radius: $radius-sm;
+    background: $border-lighter;
+    padding: $spacing-md;
+    border-radius: $radius-md;
+    line-height: 1.5;
   }
 }
 </style>

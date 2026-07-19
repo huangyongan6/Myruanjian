@@ -70,12 +70,18 @@ onBeforeUnmount(() => {
   </div>
 </template>
 
-<style scoped lang="scss">
+<style scss scoped>
 .code-viewer {
   width: 100%;
   border: 1px solid $border-light;
-  border-radius: $radius-md;
+  border-radius: $radius-lg;
   overflow: hidden;
+  transition: all $transition-fast;
+
+  &:hover {
+    box-shadow: $shadow-sm;
+    border-color: $primary-color;
+  }
 
   &__container {
     width: 100%;

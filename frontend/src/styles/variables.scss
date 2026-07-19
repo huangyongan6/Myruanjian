@@ -1,48 +1,55 @@
-// 主题色
-$primary-color: #409eff;
-$success-color: #67c23a;
-$warning-color: #e6a23c;
-$danger-color: #f56c6c;
-$info-color: #909399;
+$primary-color: #3B82F6;
+$primary-light: #EFF6FF;
+$primary-dark: #2563EB;
+$success-color: #10B981;
+$success-light: #ECFDF5;
+$warning-color: #F59E0B;
+$warning-light: #FFFBEB;
+$danger-color: #EF4444;
+$danger-light: #FEF2F2;
+$info-color: #6B7280;
 
-// 资源类型颜色
-$type-doc-color: #409eff;
-$type-quiz-color: #e6a23c;
-$type-reading-color: #67c23a;
-$type-code-color: #f56c6c;
+$type-doc-color: #3B82F6;
+$type-quiz-color: #F59E0B;
+$type-reading-color: #10B981;
+$type-code-color: #EF4444;
 
-// 文本颜色
-$text-primary: #303133;
-$text-regular: #606266;
-$text-secondary: #909399;
-$text-placeholder: #c0c4cc;
+$text-primary: #1F2937;
+$text-regular: #4B5563;
+$text-secondary: #9CA3AF;
+$text-placeholder: #D1D5DB;
 
-// 边框颜色
-$border-base: #dcdfe6;
-$border-light: #e4e7ed;
-$border-lighter: #ebeef5;
-$border-extra-light: #f2f6fc;
+$border-base: #E5E7EB;
+$border-light: #F3F4F6;
+$border-lighter: #F9FAFB;
+$border-extra-light: #FEFEFE;
 
-// 背景色
-$bg-page: #f5f7fa;
-$bg-card: #ffffff;
+$bg-page: #F8FAFC;
+$bg-card: #FFFFFF;
+$bg-sidebar: #1E293B;
+$bg-sidebar-hover: #334155;
 
-// 间距
 $spacing-xs: 4px;
 $spacing-sm: 8px;
 $spacing-md: 16px;
 $spacing-lg: 24px;
 $spacing-xl: 32px;
+$spacing-2xl: 48px;
 
-// 圆角
-$radius-sm: 4px;
-$radius-md: 8px;
-$radius-lg: 12px;
+$radius-sm: 6px;
+$radius-md: 10px;
+$radius-lg: 16px;
+$radius-xl: 20px;
+$radius-full: 9999px;
 
-// 阴影
-$shadow-card: 0 2px 12px rgba(0, 0, 0, 0.08);
-$shadow-hover: 0 6px 18px rgba(0, 0, 0, 0.12);
+$shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.04);
+$shadow-card: 0 1px 3px rgba(0, 0, 0, 0.06), 0 1px 2px rgba(0, 0, 0, 0.04);
+$shadow-hover: 0 4px 6px rgba(0, 0, 0, 0.06), 0 2px 4px rgba(0, 0, 0, 0.04);
+$shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.08), 0 4px 6px -2px rgba(0, 0, 0, 0.04);
 
-// 布局尺寸
-$sidebar-width: 220px;
-$header-height: 56px;
+$sidebar-width: 240px;
+$header-height: 60px;
+
+$transition-fast: 0.15s ease;
+$transition-normal: 0.25s ease;
+$transition-slow: 0.35s ease;

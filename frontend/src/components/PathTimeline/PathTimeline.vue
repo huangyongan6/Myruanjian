@@ -69,38 +69,82 @@ function stepTimestamp(index: number): string {
 
 <style scoped lang="scss">
 .path-timeline {
-  &__card {
-    margin-bottom: $spacing-sm;
+  :deep(.el-timeline-item__node) {
+    font-size: 14px;
   }
+
+  :deep(.el-timeline-item__content) {
+    padding-top: 4px;
+  }
+
+  &__card {
+    margin-bottom: $spacing-md;
+    border-radius: $radius-lg;
+    border: 1px solid $border-light;
+    transition: all $transition-normal;
+    overflow: hidden;
+
+    &:hover {
+      box-shadow: $shadow-hover;
+      border-color: $primary-color;
+    }
+
+    :deep(.el-card__body) {
+      padding: $spacing-lg;
+    }
+  }
+
   &__title {
     display: flex;
     align-items: center;
     gap: $spacing-sm;
-    margin-bottom: $spacing-sm;
+    margin-bottom: $spacing-md;
   }
+
   &__index {
     font-size: 12px;
     color: $text-secondary;
+    font-weight: 500;
+    background: $border-lighter;
+    padding: 4px 10px;
+    border-radius: $radius-full;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
   }
+
   &__name {
     margin: 0;
-    font-size: 15px;
+    font-size: 16px;
     font-weight: 600;
+    color: $text-primary;
+    letter-spacing: -0.01em;
   }
+
   &__desc {
-    margin: $spacing-sm 0;
+    margin: $spacing-md 0;
     color: $text-regular;
-    line-height: 1.6;
+    line-height: 1.7;
+    font-size: 14px;
   }
+
   &__meta {
     display: flex;
     flex-wrap: wrap;
     gap: $spacing-sm;
-    margin-top: $spacing-sm;
-  }
-  &__actions {
     margin-top: $spacing-md;
+    padding-top: $spacing-md;
+    border-top: 1px solid $border-lighter;
+  }
+
+  &__actions {
+    margin-top: $spacing-lg;
     text-align: right;
+
+    :deep(.el-button) {
+      border-radius: $radius-md;
+      font-weight: 500;
+      padding: 8px 20px;
+    }
   }
 }
 </style>
