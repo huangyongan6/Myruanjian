@@ -10,13 +10,13 @@ const props = defineProps<Props>()
 const emit = defineEmits<{ (e: 'complete', index: number): void }>()
 
 function stepState(index: number): 'finish' | 'process' | 'wait' {
-  if (index < props.currentIndex) return 'finish'
+  if (props.steps[index]?.completed) return 'finish'
   if (index === props.currentIndex) return 'process'
   return 'wait'
 }
 
 function stepTimestamp(index: number): string {
-  if (index < props.currentIndex) return '已完成'
+  if (props.steps[index]?.completed) return '已完成'
   if (index === props.currentIndex) return '进行中'
   return '未开始'
 }
@@ -52,13 +52,16 @@ function stepTimestamp(index: number): string {
           </div>
           <div class="path-timeline__actions">
             <el-button
-              v-if="index === currentIndex"
+              v-if="!steps[index]?.completed"
               size="small"
               type="primary"
               @click="emit('complete', index)"
             >
               标记为已完成
             </el-button>
+            <span v-else class="path-timeline__completed">
+              <IconSvg name="check-circle" :size="16" /> 已完成
+            </span>
           </div>
         </el-card>
       </el-timeline-item>
@@ -145,6 +148,15 @@ function stepTimestamp(index: number): string {
       font-weight: 500;
       padding: 8px 20px;
     }
+  }
+
+  &__completed {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    color: #67c23a;
+    font-weight: 500;
   }
 }
 </style>

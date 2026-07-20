@@ -228,18 +228,15 @@ const reportSuggestions = computed<string[]>(() => {
 })
 
 async function loadAll(): Promise<void> {
-  if (studentId.value === null) {
-    ElMessage.warning('请先选择学生')
-    return
-  }
+  const sid = studentId.value ?? 1
   refreshing.value = true
   try {
-    records.value = await listRecords(studentId.value)
+    records.value = await listRecords(sid)
   } catch {
     records.value = []
   }
   try {
-    report.value = await evaluateStudent(studentId.value)
+    report.value = await evaluateStudent(sid)
   } catch {
     report.value = null
   }
@@ -395,6 +392,10 @@ watch(studentId, (next, prev) => {
   subscribeRecordEvents()
 })
 
+function onRouteEnter(): void {
+  void loadAll()
+}
+
 onMounted(() => {
   void loadAll()
   subscribeRecordEvents()
@@ -429,6 +430,9 @@ const lastUpdatedText = computed(() => {
         </span>
         <span class="dashboard__live-time">最后刷新：{{ lastUpdatedText }}</span>
       </div>
+      <el-button size="small" @click="loadAll" :loading="refreshing">
+        <IconSvg name="refresh" :size="14" /> 手动刷新
+      </el-button>
     </div>
 
     <el-row :gutter="16" class="dashboard__metrics">

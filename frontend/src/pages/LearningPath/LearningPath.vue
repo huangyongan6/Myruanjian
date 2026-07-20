@@ -141,7 +141,7 @@ onMounted(loadAll)
           :stroke-width="18"
         />
         <div class="learning-path__progress-text">
-          进度：第 {{ pathStore.currentStepIndex }} / {{ pathStore.currentPath.totalSteps }} 步
+          进度：第 {{ pathStore.currentStepIndex }} / {{ pathStore.steps.length }} 步
         </div>
       </el-card>
 

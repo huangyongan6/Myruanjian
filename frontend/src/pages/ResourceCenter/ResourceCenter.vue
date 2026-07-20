@@ -57,11 +57,8 @@ async function loadResources(sid: number, type?: ResourceType): Promise<void> {
 }
 
 async function reload(): Promise<void> {
-  if (studentId.value === null) {
-    ElMessage.warning('请先选择学生')
-    return
-  }
-  await loadResources(studentId.value, filterType.value === 'all' ? undefined : filterType.value)
+  const sid = studentId.value ?? 1
+  await loadResources(sid, filterType.value === 'all' ? undefined : filterType.value)
 }
 
 async function openGenerate(): Promise<void> {
@@ -130,11 +127,11 @@ function viewDetail(resource: LearningResource): void {
  */
 function onDetailClose(): void {
   clearProgress()
-  if (studentId.value !== null && viewStartAt > 0) {
+  const sid = studentId.value ?? 1
+  if (viewStartAt > 0 && detailResource.value) {
     const duration = Math.round((Date.now() - viewStartAt) / 1000)
-    // 只在有有效时长时记录
     if (duration >= 1) {
-      void trackAction({ studentId: studentId.value, action: 'view', duration })
+      void trackAction({ studentId: sid, action: 'view', resourceId: detailResource.value.id, duration })
     }
   }
   viewStartAt = 0
@@ -144,11 +141,8 @@ function onDetailClose(): void {
  * 标记当前资源为已完成。
  */
 function markCompleted(): void {
-  if (studentId.value === null) {
-    ElMessage.warning('请先选择学生')
-    return
-  }
-  void trackAction({ studentId: studentId.value, action: 'complete' })
+  const sid = studentId.value ?? 1
+  void trackAction({ studentId: sid, action: 'complete', resourceId: detailResource.value?.id })
   ElMessage.success('已标记完成')
 }
 
@@ -156,8 +150,8 @@ function markCompleted(): void {
  * 答题提交回调：记一条 quiz 行为，score 为正确率百分比（0~100）。
  */
 function onQuizSubmitted(percent: number): void {
-  if (studentId.value === null) return
-  void trackAction({ studentId: studentId.value, action: 'quiz', score: percent })
+  const sid = studentId.value ?? 1
+  void trackAction({ studentId: sid, action: 'quiz', score: percent, resourceId: detailResource.value?.id })
 }
 
 function clearProgress(): void {

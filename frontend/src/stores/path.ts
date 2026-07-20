@@ -26,8 +26,9 @@ export const usePathStore = defineStore('path', () => {
 
   const currentStepIndex = computed(() => currentPath.value?.currentStep ?? 0)
   const progressPercent = computed(() => {
-    if (!currentPath.value || currentPath.value.totalSteps === 0) return 0
-    return Math.round((currentStepIndex.value / currentPath.value.totalSteps) * 100)
+    const total = steps.value.length
+    if (total === 0) return 0
+    return Math.round((currentStepIndex.value / total) * 100)
   })
 
   // 持久化到 localStorage：currentPath 变化时自动同步
@@ -69,9 +70,16 @@ export const usePathStore = defineStore('path', () => {
 
   function markStepComplete(index: number): void {
     if (!currentPath.value) return
+    const pathData = safeJsonParse<PathData>(currentPath.value.pathData, null)
+    if (pathData && Array.isArray(pathData.steps)) {
+      pathData.steps[index] = {
+        ...pathData.steps[index],
+        completed: true
+      }
+      currentPath.value.pathData = JSON.stringify(pathData)
+    }
     const next = Math.max(currentPath.value.currentStep, index + 1)
     currentPath.value.currentStep = next
-    // 异步同步到后端持久化，进度更新不阻塞 UI
     const studentId = currentPath.value.studentId
     updatePathCurrentStep(studentId, next).catch((e) => {
       console.warn('[PathStore] markStepComplete 同步失败:', e)

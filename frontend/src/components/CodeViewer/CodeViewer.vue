@@ -1,15 +1,13 @@
 <script setup lang="ts">
-import { onMounted, onBeforeUnmount, ref, watch } from 'vue'
-import * as monaco from 'monaco-editor'
+import { computed } from 'vue'
+import hljs from 'highlight.js'
+import 'highlight.js/styles/github.css'
 
 interface Props {
   code: string
   language?: string
 }
 const props = withDefaults(defineProps<Props>(), { language: 'python' })
-
-const containerRef = ref<HTMLDivElement | null>(null)
-let editor: monaco.editor.IStandaloneCodeEditor | null = null
 
 function detectLanguage(lang: string): string {
   const normalized = lang.toLowerCase()
@@ -27,46 +25,25 @@ function detectLanguage(lang: string): string {
   return map[normalized] ?? normalized
 }
 
-function init(): void {
-  if (!containerRef.value) return
-  editor = monaco.editor.create(containerRef.value, {
-    value: props.code,
-    language: detectLanguage(props.language ?? 'python'),
-    theme: 'vs',
-    readOnly: true,
-    automaticLayout: true,
-    minimap: { enabled: false },
-    fontSize: 13,
-    lineNumbers: 'on',
-    scrollBeyondLastLine: false,
-    folding: true,
-    wordWrap: 'on'
-  })
-}
-
-onMounted(init)
-
-watch(
-  () => [props.code, props.language],
-  ([code, lang]) => {
-    if (!editor) return
-    const model = editor.getModel()
-    if (model) {
-      monaco.editor.setModelLanguage(model, detectLanguage(String(lang)))
-      model.setValue(String(code))
+const highlightedCode = computed(() => {
+  const lang = detectLanguage(props.language ?? 'python')
+  if (lang && hljs.getLanguage(lang)) {
+    try {
+      return hljs.highlight(props.code, { language: lang, ignoreIllegals: true }).value
+    } catch {
+      // 忽略
     }
   }
-)
-
-onBeforeUnmount(() => {
-  editor?.dispose()
-  editor = null
+  return hljs.highlightAuto(props.code).value
 })
 </script>
 
 <template>
   <div class="code-viewer">
-    <div ref="containerRef" class="code-viewer__container" />
+    <div class="code-viewer__header">
+      <span class="code-viewer__lang">{{ detectLanguage(language ?? 'python') }}</span>
+    </div>
+    <pre class="code-viewer__pre"><code class="code-viewer__code" v-html="highlightedCode" /></pre>
   </div>
 </template>
 
@@ -83,9 +60,43 @@ onBeforeUnmount(() => {
     border-color: $primary-color;
   }
 
-  &__container {
-    width: 100%;
-    height: 400px;
+  &__header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: $spacing-sm $spacing-md;
+    background: $bg-card;
+    border-bottom: 1px solid $border-light;
   }
+
+  &__lang {
+    font-size: 12px;
+    font-weight: 600;
+    color: $text-secondary;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  &__pre {
+    margin: 0;
+    padding: $spacing-lg;
+    background: $bg-card;
+    overflow-x: auto;
+    max-height: 400px;
+    overflow-y: auto;
+  }
+
+  &__code {
+    font-size: 13px;
+    font-family: 'SF Mono', 'Fira Code', Consolas, monospace;
+    line-height: 1.6;
+    color: $text-primary;
+    display: block;
+    white-space: pre;
+  }
+}
+
+:deep(.hljs) {
+  background: $bg-card;
 }
 </style>
